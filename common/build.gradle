@@ -1,0 +1,8 @@
+apply plugin: 'scala'
+
+ext.scala_version = '2.11.7'
+
+dependencies {
+    compile "org.scala-lang:scala-library:$scala_version"
+    compile fileTree(dir: 'libs', include: '*.jar')
+}

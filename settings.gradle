@@ -1,1 +1,3 @@
 rootProject.name = 'ml-g4-group'
+
+include 'common', 'neat', 'qlearning'

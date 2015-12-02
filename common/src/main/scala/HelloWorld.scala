@@ -1,3 +1,6 @@
+import agent.{PlayerInput, AlwaysLeftInputProvider}
+import server.GameStateInterface
+
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
@@ -11,4 +14,10 @@ object HelloWorld {
       println("Testing")
     }, Duration("5s"))
   }
+
+
+}
+
+class PlayerTest extends AlwaysLeftInputProvider {
+  override def getInput(gameStateInterface: GameStateInterface): PlayerInput = ???
 }

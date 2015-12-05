@@ -40,6 +40,7 @@ class qLearningExample {
 
     println("started...")
 
+    //How many epochs do we run?
     var epoch = 0
 
     while(epoch != 100) {

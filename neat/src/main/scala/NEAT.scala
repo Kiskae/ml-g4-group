@@ -1,4 +1,6 @@
 import agent.{PlayerInputProvider, BallFollower}
+import org.neuroph.core.{Neuron, NeuralNetwork}
+import org.neuroph.nnet.learning.CompetitiveLearning
 import server.{GameProperties, PhysicsProperties, GameState, GameLoop}
 import ui.SwingUI
 
@@ -12,27 +14,34 @@ object NEAT {
   def main(args: Array[String]) = {
     val gameProps = new GameProperties()
     val physProps = new PhysicsProperties()
-    val lInput = new BallFollower(gameProps.playerRadius / 2)
-//    val lInput = new NEATInputProvider
+//    val lInput = new BallFollower(gameProps.playerRadius / 2)
+
+    val neuralNetwork = new NeuralNetwork[CompetitiveLearning]
+    neuralNetwork.setInputNeurons(Array(new Neuron(), new Neuron, new Neuron, new Neuron))
+    neuralNetwork.setOutputNeurons(Array(new Neuron(), new Neuron, new Neuron))
+    val lInput = new NEATInputProvider(neuralNetwork)
     val rInput = new BallFollower(gameProps.playerRadius / 2)
     val s = new GameState(gameProps, physProps, lInput, rInput)
 
-    var score = s.getMyScore
-    var counter = 0
-    while (counter < maxCounter) {
-      s.step()
+    while(true) {
+      var score = s.getMyScore
+      var counter = 0
+      while (counter < maxCounter) {
+        s.step()
 
-      if(s.getMyScore > score){
-        counter = 0
-//        println(s"$counter: $score")
-        score = s.getMyScore
+        if (s.getMyScore > score) {
+          counter = 0
+          //        println(s"$counter: $score")
+          score = s.getMyScore
+        }
+
+        counter = counter + 1
       }
 
-      counter = counter + 1
+      println(s"Killed prototype. score = $score")
+      neuralNetwork.setOutputNeurons(Array(new Neuron(), new Neuron, new Neuron))
+      s.lInputProvider = new NEATInputProvider(neuralNetwork)
     }
-
-    println(s"Killed prototype. score = $score")
-
   }
 
 }

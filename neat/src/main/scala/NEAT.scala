@@ -7,17 +7,32 @@ import ui.SwingUI
   */
 object NEAT {
 
+  val maxCounter = 5000
+
   def main(args: Array[String]) = {
     val gameProps = new GameProperties()
     val physProps = new PhysicsProperties()
-    while (true) {
-      val lInput = new BallFollower(gameProps.playerRadius / 2)
-      val rInput = new BallFollower(gameProps.playerRadius / 2)
-      val s = new GameState(gameProps, physProps, lInput, rInput)
-      //         run(s);
-      val ui = new SwingUI(gameProps)
-      new GameLoop(60, ui, s).run()
+    val lInput = new BallFollower(gameProps.playerRadius / 2)
+//    val lInput = new NEATInputProvider
+    val rInput = new BallFollower(gameProps.playerRadius / 2)
+    val s = new GameState(gameProps, physProps, lInput, rInput)
+
+    var score = s.getMyScore
+    var counter = 0
+    while (counter < maxCounter) {
+      s.step()
+
+      if(s.getMyScore > score){
+        counter = 0
+//        println(s"$counter: $score")
+        score = s.getMyScore
+      }
+
+      counter = counter + 1
     }
+
+    println(s"Killed prototype. score = $score")
+
   }
 
 }

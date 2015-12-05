@@ -3,3 +3,13 @@ apply plugin: 'scala'
 dependencies {
     compile project(':common')
 }
+
+repositories {
+    maven {
+        url "http://neuroph.sourceforge.net/maven2/"
+    }
+}
+
+dependencies {
+    compile group: "org.neuroph", name: "neuroph-core", version: "2.9"
+}

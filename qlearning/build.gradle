@@ -3,3 +3,9 @@ apply plugin: 'scala'
 dependencies {
     compile project(':common')
 }
+
+task run(type: JavaExec, dependsOn: classes) {
+    main = 'Main'
+    classpath sourceSets.main.runtimeClasspath
+    classpath configurations.runtime
+}

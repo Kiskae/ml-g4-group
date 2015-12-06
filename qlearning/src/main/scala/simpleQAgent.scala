@@ -28,10 +28,10 @@ object Main2 extends App {
   * @param gameProps
   */
 class tableState(state: State, gameProps:GameProperties) {
-  val ballX:Int = ((state.getBall.getPosX/(gameProps.sideWidth*2))*200).toInt
-  val ballY:Int = ((state.getBall.getPosY/(gameProps.netHeight*3))*100).toInt
-  val meX:Int = ((state.getMe.getPosX/(gameProps.sideWidth*2))*200).toInt
-  val meY:Int = ((state.getMe.getPosY/(gameProps.netHeight*3))*100).toInt
+  val ballX:Int = ((state.getBall.getPosX/(gameProps.sideWidth*2).toDouble)*10).toInt
+  val ballY:Int = ((state.getBall.getPosY/(gameProps.netHeight*3).toDouble)*10).toInt
+  val meX:Int = ((state.getMe.getPosX/(gameProps.sideWidth*2).toDouble)*10).toInt
+  val meY:Int = ((state.getMe.getPosY/(gameProps.netHeight*3).toDouble)*10).toInt
 
   var ballV:Boolean = false
   if(state.getBall.getVelY <= 0) {
@@ -48,7 +48,6 @@ class tableState(state: State, gameProps:GameProperties) {
     playerV = true
   }
 
-  println("X: " + ballX + " Y: " + ballY)
 }
 
 class simpleQAgent(gameProps:GameProperties)  extends AlwaysLeftInputProvider{
@@ -88,6 +87,7 @@ class simpleQAgent(gameProps:GameProperties)  extends AlwaysLeftInputProvider{
     }
 
     //next random action
+    //TODO: in order to actualy learn we need to anneal this and get the best action based of the Q table
     val randomA = r.nextInt(6)
 
     //Save the current state and action.
@@ -139,7 +139,7 @@ class simpleQAgent(gameProps:GameProperties)  extends AlwaysLeftInputProvider{
   def R(state: tableState): Int = {
 
     //This is where we score a point.
-    if ( state.ballX > 10 && state.ballY <= 2) {
+    if ( state.ballX > 0 && state.ballY <= 1) {
       println("Returning 100!!")
       return 100
     } else {

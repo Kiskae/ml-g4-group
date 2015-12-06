@@ -21,11 +21,14 @@ object NEAT {
 //    val lInput = new BallFollower(30000L / 2)
     val rInput = new BallFollower(30000L /  2)
     val generation = new Generation(1, 10)
+    generation.initialize()
 
     //TODO for each NN in generation: run 1 "game" and evaluate.
 
-    val score = evaluate(neuralNetwork, lInput, rInput)
-    println(s"Killed prototype. score = $score")
+    for(neuralNetwork <- generation.getAllNetworks()){
+      val score = evaluate(neuralNetwork, lInput, rInput)
+      println(s"Killed prototype. score = $score")
+    }
 
 //    s.lInputProvider = new NEATInputProvider(neuralNetwork)
   }

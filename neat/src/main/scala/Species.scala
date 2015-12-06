@@ -6,6 +6,6 @@ import scala.collection.mutable.ArrayBuffer
 /**
   * Created by bas on 6-12-15.
   */
-class Species(networks : ArrayBuffer[NeuralNetwork[LearningRule]]) {
+class Species(var networks : ArrayBuffer[NeuralNetwork[LearningRule]]) {
 
 }

@@ -1,4 +1,5 @@
 import agent.{PlayerInputProvider, BallFollower}
+import org.neuroph.core.learning.LearningRule
 import org.neuroph.core.{Neuron, NeuralNetwork}
 import org.neuroph.nnet.learning.CompetitiveLearning
 import server.{GameProperties, PhysicsProperties, GameState, GameLoop}
@@ -9,40 +10,41 @@ import ui.SwingUI
   */
 object NEAT {
 
-  val maxCounter = 5000
+  val maxIdleSteps = 10000
 
   def main(args: Array[String]) = {
     val gameProps = new GameProperties()
     val physProps = new PhysicsProperties()
-//    val lInput = new BallFollower(gameProps.playerRadius / 2)
 
-    val neuralNetwork = new NeuralNetwork[CompetitiveLearning]
+    val neuralNetwork = new NeuralNetwork[LearningRule]
     neuralNetwork.setInputNeurons(Array(new Neuron(), new Neuron, new Neuron, new Neuron))
     neuralNetwork.setOutputNeurons(Array(new Neuron(), new Neuron, new Neuron))
-    val lInput = new NEATInputProvider(neuralNetwork)
+//    val lInput = new NEATInputProvider(neuralNetwork)
+    val lInput = new BallFollower(gameProps.playerRadius / 2)
     val rInput = new BallFollower(gameProps.playerRadius / 2)
-    val s = new GameState(gameProps, physProps, lInput, rInput)
     val generation = new Generation(1, 10)
 
-    while(true) {
+    //TODO for each NN in generation: run 1 "game" and evaluate.
 
-      var score = s.getMyScore
-      var counter = 0
-      while (counter < maxCounter) {
-        s.step()
+    val s = new GameState(gameProps, physProps, lInput, rInput)
+    var latestScore = s.getMyScore
+    var stepCounter = 0
+    var latestPointGainedStep = 0
 
-        if (s.getMyScore > score) {
-          counter = 0
-                  println(s"$counter: $score")
-          score = s.getMyScore
-        }
+    while ((stepCounter - latestPointGainedStep) < maxIdleSteps) {
+      s.step()
 
-        counter = counter + 1
+      if (s.getMyScore > latestScore) {
+        latestPointGainedStep = stepCounter
+        latestScore = s.getMyScore
+        println(s"$stepCounter: $latestScore")
       }
 
-      println(s"Killed prototype. score = $score")
-      s.lInputProvider = new NEATInputProvider(neuralNetwork)
+      stepCounter = stepCounter + 1
     }
+
+    println(s"Killed prototype. score = $latestScore")
+//    s.lInputProvider = new NEATInputProvider(neuralNetwork)
   }
 
 }

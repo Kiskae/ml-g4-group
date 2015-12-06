@@ -1,12 +1,13 @@
 import agent.{PlayerInput, AlwaysLeftInputProvider}
 import org.neuroph.core.NeuralNetwork
+import org.neuroph.core.learning.LearningRule
 import org.neuroph.nnet.learning.CompetitiveLearning
 import server.GameStateInterface
 
 /**
   * Created by bas on 5-12-15.
   */
-class NEATInputProvider(neuralNetwork: NeuralNetwork[CompetitiveLearning]) extends AlwaysLeftInputProvider{
+class NEATInputProvider(neuralNetwork: NeuralNetwork[LearningRule]) extends AlwaysLeftInputProvider{
   override def getInput(gameStateInterface: GameStateInterface): PlayerInput = {
 
     val ball = gameStateInterface.getBall
@@ -15,7 +16,6 @@ class NEATInputProvider(neuralNetwork: NeuralNetwork[CompetitiveLearning]) exten
     neuralNetwork.calculate()
 
     val output = neuralNetwork.getOutput
-    println(output.length)
     val left = output(0)
     val right = output(1)
     val up = output(2)

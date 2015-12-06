@@ -22,8 +22,10 @@ object NEAT {
     val lInput = new NEATInputProvider(neuralNetwork)
     val rInput = new BallFollower(gameProps.playerRadius / 2)
     val s = new GameState(gameProps, physProps, lInput, rInput)
+    val generation = new Generation(1, 10)
 
     while(true) {
+
       var score = s.getMyScore
       var counter = 0
       while (counter < maxCounter) {
@@ -31,7 +33,7 @@ object NEAT {
 
         if (s.getMyScore > score) {
           counter = 0
-          //        println(s"$counter: $score")
+                  println(s"$counter: $score")
           score = s.getMyScore
         }
 
@@ -39,7 +41,6 @@ object NEAT {
       }
 
       println(s"Killed prototype. score = $score")
-      neuralNetwork.setOutputNeurons(Array(new Neuron(), new Neuron, new Neuron))
       s.lInputProvider = new NEATInputProvider(neuralNetwork)
     }
   }

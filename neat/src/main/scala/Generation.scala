@@ -24,4 +24,8 @@ class Generation(speciesCount : Int, networksPerSpecies: Int) {
       species += (new Species(networks))
     }
   }
+
+  def getAllNetworks() = {
+
+  }
 }

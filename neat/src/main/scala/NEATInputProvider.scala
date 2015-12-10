@@ -7,7 +7,7 @@ import server.GameStateInterface
 /**
   * Created by bas on 5-12-15.
   */
-class NEATInputProvider(neuralNetwork: NeuralNetwork[LearningRule]) extends AlwaysLeftInputProvider{
+class NEATInputProvider(neuralNetwork: ENeuralNetwork[LearningRule]) extends AlwaysLeftInputProvider{
   override def getInput(gameStateInterface: GameStateInterface): PlayerInput = {
 
     val ball = gameStateInterface.getBall

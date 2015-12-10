@@ -12,21 +12,22 @@ class Generation(speciesCount : Int, networksPerSpecies: Int, inputLayerCount: I
 
   def initialize() = {
     for(i <- 0 until speciesCount){
-//      var networks = ArrayBuffer[NeuralNetwork[LearningRule]]
-//      val networks = List.fill(speciesCount)(new NeuralNetwork[LearningRule])
-
-      var networks = new ArrayBuffer[NeuralNetwork[LearningRule]]
+      var networks = new ArrayBuffer[ENeuralNetwork[LearningRule]]
 
       for(i <- 0 until networksPerSpecies){
-        val network = new NeuralNetwork[LearningRule]
-        val inputNeurons = new ArrayBuffer[Neuron]
-        val outputNeurons = new ArrayBuffer[Neuron]
+        val network = new ENeuralNetwork[LearningRule]
 
+        val inputNeurons = new ArrayBuffer[Neuron]
         for(j <- 0 until inputLayerCount)
           inputNeurons += (new Neuron)
 
+        network.setInputNeurons(inputNeurons.toArray)
+
+        val outputNeurons = new ArrayBuffer[Neuron]
         for(k <- 0 until outputLayerCount)
           outputNeurons += (new Neuron)
+
+        network.setOutputNeurons(outputNeurons.toArray)
 
         networks += (network)
       }

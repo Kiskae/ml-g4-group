@@ -18,17 +18,8 @@ class Generation(speciesCount : Int, networksPerSpecies: Int, inputLayerCount: I
       for(i <- 0 until networksPerSpecies){
         val network = new ENeuralNetwork[LearningRule]
 
-        val inputNeurons = new ArrayBuffer[Neuron]
-        for(j <- 0 until inputLayerCount)
-          inputNeurons += (new Neuron)
-
-        network.setInputNeurons(inputNeurons.toArray)
-
-        val outputNeurons = new ArrayBuffer[Neuron]
-        for(k <- 0 until outputLayerCount)
-          outputNeurons += (new Neuron)
-
-        network.setOutputNeurons(outputNeurons.toArray)
+        network.makeInputLayer(inputLayerCount)
+        network.makeOutputLayer(outputLayerCount)
 
         networks += (network)
       }

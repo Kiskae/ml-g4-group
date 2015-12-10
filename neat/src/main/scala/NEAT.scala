@@ -1,4 +1,5 @@
 import agent.{PlayerInputProvider, BallFollower}
+import grizzled.slf4j.{Logging}
 import org.neuroph.core.learning.LearningRule
 import org.neuroph.core.{Neuron, NeuralNetwork}
 import org.neuroph.nnet.learning.CompetitiveLearning
@@ -8,12 +9,12 @@ import ui.SwingUI
 /**
   * Created by bas on 5-12-15.
   */
-object NEAT {
+object NEAT extends Logging{
 
   val maxIdleSteps = 10000
 
   def main(args: Array[String]) = {
-
+    logger.info("Starting NEAT!")
 //    val lInput = new BallFollower(30000L / 2)
     val rInput = new BallFollower(30000L /  2)
     val generation = new Generation(1, 10, 4, 3)
@@ -24,9 +25,12 @@ object NEAT {
     for(neuralNetwork <- generation.getAllNetworks()){
       val lInput = new NEATInputProvider(neuralNetwork)
       val score = evaluate(lInput, rInput)
-      println(s"Killed prototype. score = $score")
+      neuralNetwork.score = score
+      logger.info(s"Killed prototype. score = $score")
     }
 
+
+    generation.evolve
   }
 
   def evaluate(lInput : PlayerInputProvider, rInput : PlayerInputProvider) = {

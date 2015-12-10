@@ -9,6 +9,7 @@ import scala.collection.mutable.ArrayBuffer
   */
 class Generation(speciesCount : Int, networksPerSpecies: Int, inputLayerCount: Int, outputLayerCount: Int) {
   var species = new ArrayBuffer[Species]
+  var currentGeneration = 0
 
   def initialize() = {
     for(i <- 0 until speciesCount){
@@ -39,5 +40,21 @@ class Generation(speciesCount : Int, networksPerSpecies: Int, inputLayerCount: I
   def getAllNetworks() = {
     //TODO return all networks
     species(0).networks
+  }
+
+  def evolve() = {
+
+    mutate
+    breed
+
+    currentGeneration += 1
+  }
+
+  def mutate() = {
+
+  }
+
+  def breed() = {
+
   }
 }

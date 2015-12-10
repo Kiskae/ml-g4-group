@@ -14,26 +14,22 @@ object NEAT {
 
   def main(args: Array[String]) = {
 
-    val neuralNetwork = new NeuralNetwork[LearningRule]
-    neuralNetwork.setInputNeurons(Array(new Neuron(), new Neuron, new Neuron, new Neuron))
-    neuralNetwork.setOutputNeurons(Array(new Neuron(), new Neuron, new Neuron))
-    val lInput = new NEATInputProvider(neuralNetwork)
 //    val lInput = new BallFollower(30000L / 2)
     val rInput = new BallFollower(30000L /  2)
-    val generation = new Generation(1, 10)
+    val generation = new Generation(1, 10, 4, 3)
     generation.initialize()
 
     //TODO for each NN in generation: run 1 "game" and evaluate.
 
     for(neuralNetwork <- generation.getAllNetworks()){
-      val score = evaluate(neuralNetwork, lInput, rInput)
+      val lInput = new NEATInputProvider(neuralNetwork)
+      val score = evaluate(lInput, rInput)
       println(s"Killed prototype. score = $score")
     }
 
-//    s.lInputProvider = new NEATInputProvider(neuralNetwork)
   }
 
-  def evaluate(neuralNetwork: NeuralNetwork[LearningRule], lInput : PlayerInputProvider, rInput : PlayerInputProvider) = {
+  def evaluate(lInput : PlayerInputProvider, rInput : PlayerInputProvider) = {
     val gameProps = new GameProperties()
     val physProps = new PhysicsProperties()
     val s = new GameState(gameProps, physProps, lInput, rInput)

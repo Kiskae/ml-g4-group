@@ -19,6 +19,17 @@ class ENeuralNetwork[L <: LearningRule] extends NeuralNetwork with Logging{
 
     }
 
+    //Remove neuron ?
+
+    //Add connection
+      //Get innovation number
+      this.createConnection()
+
+
+    //remove connection
+
+    //change connection weight
+
   }
 
   //TODO: add innovation numbers support

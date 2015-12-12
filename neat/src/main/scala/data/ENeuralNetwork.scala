@@ -1,6 +1,8 @@
+package data
+
 import grizzled.slf4j.Logging
-import org.neuroph.core.{Neuron, Layer, NeuralNetwork}
 import org.neuroph.core.learning.LearningRule
+import org.neuroph.core.{NeuralNetwork, Neuron}
 
 import scala.collection.mutable.ArrayBuffer
 import scala.util.Random
@@ -8,22 +10,22 @@ import scala.util.Random
 /**
   * Created by bas on 10-12-15.
   */
-class ENeuralNetwork[L <: LearningRule] extends NeuralNetwork with Logging{
+class ENeuralNetwork[L <: LearningRule] extends NeuralNetwork[L] with Logging {
   var score = 0
 
   def mutate() = {
     val rand = new Random
 
     // Add neuron with probability 0.1
-    if(rand.nextInt(10) == 0){
+    if (rand.nextInt(10) == 0) {
 
     }
 
     //Remove neuron ?
 
     //Add connection
-      //Get innovation number
-      this.createConnection()
+    //Get innovation number
+    //this.createConnection()
 
 
     //remove connection
@@ -36,8 +38,8 @@ class ENeuralNetwork[L <: LearningRule] extends NeuralNetwork with Logging{
   def makeInputLayer(inputLayerCount: Int) = {
     val inputNeurons = new ArrayBuffer[Neuron]
 
-    for(j <- 0 until inputLayerCount) {
-      inputNeurons += (new Neuron)
+    for (j <- 0 until inputLayerCount) {
+      inputNeurons += new Neuron
     }
 
     this.setInputNeurons(inputNeurons.toArray)
@@ -47,8 +49,8 @@ class ENeuralNetwork[L <: LearningRule] extends NeuralNetwork with Logging{
   def makeOutputLayer(outputLayerCount: Int) = {
     val outputNeurons = new ArrayBuffer[Neuron]
 
-    for(k <- 0 until outputLayerCount) {
-      outputNeurons += (new Neuron)
+    for (k <- 0 until outputLayerCount) {
+      outputNeurons += new Neuron
     }
 
     this.setOutputNeurons(outputNeurons.toArray)

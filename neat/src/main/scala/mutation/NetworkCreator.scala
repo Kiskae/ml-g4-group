@@ -13,7 +13,7 @@ object NetworkCreator {
   }
 
   private def createSpecies(networksPerSpecies: Int)(createNetwork: => ENeuralNetwork[_]): Species = {
-    new Species(Seq.fill(networksPerSpecies)(createNetwork))
+    new Species(Seq.fill[ENeuralNetwork[_]](networksPerSpecies)(createNetwork))
   }
 
   private def createNetwork(inputLayerCount: Int, outputLayerCount: Int): ENeuralNetwork[_] = {

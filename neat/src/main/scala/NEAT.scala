@@ -8,24 +8,31 @@ import server.{GameProperties, GameState, PhysicsProperties}
   */
 object NEAT extends Logging {
 
-  val maxIdleSteps = 10000
+  val maxIdleSteps = 5000
 
   def main(args: Array[String]) = {
     logger.info("Starting NEAT!")
     //    val lInput = new BallFollower(30000L / 2)
     val rInput = new BallFollower(30000L / 2)
-    val generation = NetworkCreator.generation(1, 10, 4, 3)
+
+    val speciesCount = 10
+    val networksPerSpecies = 100
+    val inputLayerCount = 4
+    val outputLayerCount = 3
+    val generation = NetworkCreator.generation(speciesCount, networksPerSpecies, inputLayerCount, outputLayerCount)
 
     //TODO for each NN in generation: run 1 "game" and evaluate.
 
-    for (neuralNetwork <- generation.networks) {
-      val lInput = new NEATInputProvider(neuralNetwork)
-      val score = evaluate(lInput, rInput)
-      neuralNetwork.score = score
-      logger.info(s"Killed prototype. score = $score")
-    }
+    for(i <- 1 to 5){
+      for (neuralNetwork <- generation.networks) {
+        val lInput = new NEATInputProvider(neuralNetwork)
+        val score = evaluate(lInput, rInput)
+        neuralNetwork.score = score
+        if(score > 0) logger.info(s"Killed prototype. score = $score")
+      }
 
-    generation.evolve
+      generation.evolve
+    }
   }
 
   def evaluate(lInput: PlayerInputProvider, rInput: PlayerInputProvider) = {

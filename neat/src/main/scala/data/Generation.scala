@@ -29,7 +29,7 @@ class Generation(val species: Seq[Species]) {
 
       val outputNeurons = n.getOutputNeurons
       val endNeuron = outputNeurons(r.nextInt(n.getOutputsCount))
-      n.createConnection(startNeuron, endNeuron, r.nextDouble())
+      n.createConnection(startNeuron, endNeuron, r.nextDouble()) //TODO what is the range of the weights?
     }
   }
 

@@ -67,12 +67,12 @@ class TableQLearner(gameProps:GameProperties, physProps:PhysicsProperties, gamma
 
     //Safe to history, using a modulo seems to be the fastest way.
     transHist(tHistCount % tHistSize) =  (stateNdx(state), action, reward(nextState), stateNdx(nextState))
-    tHistCount += 1
+    if(tHistCount != tHistSize) tHistCount += 1
 
     //Perform minibatch
     for(i <- 1 to batchSize) {
 
-      val t = transHist(r.nextInt(tHistCount) % tHistSize)
+      val t = transHist(r.nextInt(tHistCount))
 
       //TODO This canse be refactored by not store these.
       val row = qTable(t._1)

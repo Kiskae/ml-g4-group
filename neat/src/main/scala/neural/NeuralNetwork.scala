@@ -7,9 +7,9 @@ import scala.collection.mutable.ArrayBuffer
   */
 class NeuralNetwork {
   var numberOfNeurons = 0
-  var hiddenNeurons = ArrayBuffer[Neuron]
-  var inputNeurons = ArrayBuffer[Neuron]
-  var outputNeurons = ArrayBuffer[Neuron]
+  var hiddenNeurons = new ArrayBuffer[Neuron]
+  var inputNeurons = new ArrayBuffer[Neuron]
+  var outputNeurons = new ArrayBuffer[Neuron]
 
   def this(neuronsInCount: Int, neuronsOutCount: Int) {
     this

@@ -27,4 +27,12 @@ object TestNeuralNetwork extends App{
   n.evaluate
   println("n.getoutput: " + n.getOutput)
   if(NeuralNetworkUtil.treshold(n.getOutput(0)) == 1) println("Succes") else println("Failed")
+
+  val hn = new Neuron(5)
+  n.addHiddenNeuron(hn)
+
+  n.createConnection(x1, hn, -1.0)
+  n.createConnection(hn, out, -1.0)
+  n.evaluate
+  println("n.getoutput: " + n.getOutput)
 }

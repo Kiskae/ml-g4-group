@@ -66,6 +66,8 @@ class NeuralNetwork {
   def getOutputNeurons: Seq[Neuron] = outputNeurons
 
   def getWeights: Seq[Double] = neurons.flatMap(_.getWeights)
+
+  def addHiddenNeuron(neuron: Neuron) = hiddenNeurons += neuron
 }
 
 object NeuralNetworkUtil {

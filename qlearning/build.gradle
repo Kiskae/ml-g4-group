@@ -4,6 +4,13 @@ dependencies {
     compile project(':common')
 }
 
+// http://stackoverflow.com/a/22640847
+task fatJar(type: Jar) {
+    baseName = project.name + '-all'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
+
 task run(type: JavaExec, dependsOn: classes) {
     main = 'Main2'
     classpath sourceSets.main.runtimeClasspath

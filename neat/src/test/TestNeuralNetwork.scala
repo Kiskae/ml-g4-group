@@ -1,4 +1,4 @@
-import neural.{Neuron, NeuralNetwork}
+import neural.{NeuralNetworkUtil, Neuron, NeuralNetwork}
 
 /**
   * Created by bas on 21-12-15.
@@ -18,13 +18,13 @@ object TestNeuralNetwork extends App{
   n.createConnection(x2, out, 1.0)
   n.createConnection(b, out, -1.5)
 
-  n.setInput(1, 0)
+  n.setInput(1, 0, 1)
   n.evaluate
   println("n.getoutput: " + n.getOutput)
-  if(n.getOutput == 0) println("Succes") else println("Failed")
+  if(NeuralNetworkUtil.treshold(n.getOutput(0)) == 0) println("Succes") else println("Failed")
 
-  n.setInput(1, 1)
+  n.setInput(1, 1, 1)
   n.evaluate
   println("n.getoutput: " + n.getOutput)
-  if(n.getOutput == 1) println("Succes") else println("Failed")
+  if(NeuralNetworkUtil.treshold(n.getOutput(0)) == 1) println("Succes") else println("Failed")
 }

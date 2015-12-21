@@ -7,7 +7,7 @@ import scala.collection.mutable.ArrayBuffer
   */
 class NeuralNetwork {
   var numberOfNeurons = 0
-  var neurons = ArrayBuffer[Neuron]
+  var hiddenNeurons = ArrayBuffer[Neuron]
   var inputNeurons = ArrayBuffer[Neuron]
   var outputNeurons = ArrayBuffer[Neuron]
 
@@ -21,7 +21,7 @@ class NeuralNetwork {
   def setOutputNeurons(outputNeurons: Seq[Neuron]) = ???
 
   def setInput(inputs: Double*) = ???
-  def calculate = ???
+  def evaluate = ???
   def getOutput: Seq[Double] = ???
 
   def getInputsCount: Int = ???

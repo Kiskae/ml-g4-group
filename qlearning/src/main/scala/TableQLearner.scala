@@ -2,35 +2,39 @@ import server._
 import agent.{PlayerInput => Input}
 import server.{GameStateInterface => State}
 import ui.SwingUI
+import java.io.{PrintStream, File}
+import java.util.Scanner
 
-class TableQLearner(gameProps:GameProperties, gamma:Double=0.8, alpha:Double=0.9, randChance:Double=0.1) extends AbstractQLearner {
+class TableQLearner(gameProps:GameProperties, physProps:PhysicsProperties, gamma:Double=0.8, alpha:Double=0.9, randChance:Double=0.1) extends AbstractQLearner {
   //Initialize Q
-  val qTable = Array.ofDim[Double](200,4,100,4,6)
+  val qTable = Array.ofDim[Double](30*10*3*3,6)
 
   val r = scala.util.Random
 
-  def mapX(x:Long) = 10+math.floor(x*10/(gameProps.sideWidth*2.0) min 9 max -10).toInt
+  def mapX(x:Long) = 10+math.floor(x*10/(gameProps.sideWidth*2.0) min 19 max -10).toInt
   def mapY(y:Long) = (y*10/(gameProps.netHeight*3) min 9 max 0).toInt
-  def mapVel(velX:Long,velY:Long) = (if (velX <= 0) 0 else 1) + (if (velY <= 0) 0 else 2)
+  def mapVel(vel:Long) =  1+math.signum(vel / physProps.playerHorizontalSpeed).toInt
+
+  /** Map a multi-dimensional array index to the eqivalent index of a flat array.
+    *
+    * The values of `nextDim` should range from 0 to `nextDimRange-1`.
+    */
+  def ndxAddDim(prevNdx:Int, nextDimRange:Int, nextDim:Int) = prevNdx*nextDimRange + nextDim
+
+  def stateNdx(state: State):Int = {
+    val ball = state.getBall
+    val me = state.getMe
+
+    val diffX = mapX(state.getBall.getPosX - state.getMe.getPosX)
+    val diffY = mapY(state.getBall.getPosY - state.getMe.getPosY)
+    val velY = mapVel(state.getBall.getVelY)
+    val velX = mapVel(state.getBall.getVelX)
+
+    ndxAddDim(ndxAddDim(ndxAddDim(diffX,10,diffY),3,velY),3,velX)
+  }
 
   def qRow(state: State):Array[Double] = {
-    val ballX = mapX(state.getBall.getPosX)
-    val ballY = mapY(state.getBall.getPosY)
-    val ballV = mapVel(state.getBall.getVelY,state.getBall.getVelX)
-
-    val meX = mapX(state.getMe.getPosX)
-    val meY = mapY(state.getMe.getPosY)
-    val meV = mapVel(state.getMe.getVelY,state.getMe.getVelX)
-
-    if (ballX*10 + ballY >= 200 || meX*10 + meY >= 100) {
-      println(state.getBall.getPosX+" "+state.getBall.getPosY)
-      println(ballX +" "+ ballY)
-      println(state.getMe.getPosX+" "+state.getMe.getPosY)
-      println(meX +" "+ meY)
-    }
-
-    val tmp = qTable(ballX*10 + ballY)(ballV)
-    tmp(meX*10 + meY)(meV)
+    qTable(stateNdx(state))
   }
 
   override def q(state: State, action: Int) = qRow(state)(action)
@@ -44,7 +48,6 @@ class TableQLearner(gameProps:GameProperties, gamma:Double=0.8, alpha:Double=0.9
 
   override def action(state: State) = {
     val ran = r.nextDouble
-    //println(ran < randChance)
     if (ran < randChance)
       r.nextInt(6)
     else
@@ -65,27 +68,55 @@ class TableQLearner(gameProps:GameProperties, gamma:Double=0.8, alpha:Double=0.9
     else
       100
   }
+
+  def writeToFile(file:File) {
+    val stream = new PrintStream(file)
+    qTable.foreach {row =>
+      row.foreach(x => stream.print(f"$x%6f\t"))
+      stream.println()
+    }
+    stream.close()
+  }
+
+  def loadFromFile(file:File) {
+    val scanner = new Scanner(file)
+    for (i <- 0 until qTable.length) {
+      for (j <- 0 until qTable(i).length) {
+        qTable(i)(j) = scanner.nextDouble
+      }
+    }
+    scanner.close()
+  }
 }
 
-object Main3 extends App {
+object QAgentTrainer extends App {
   val gameProps:GameProperties = new GameProperties()
   val physProps:PhysicsProperties = new PhysicsProperties()
 
-  val qAgent = new TableQLearner(gameProps)
-  val bAgent = new agent.BallFollower(gameProps.playerRadius/2)
-  val ui:SwingUI = new SwingUI(gameProps)
-  val s:GameState = new GameState(gameProps, physProps, qAgent, bAgent);
+  val qAgent = new TableQLearner(gameProps,physProps)
+  //val bAgent = new agent.BallFollower(gameProps.playerRadius/2)
+  val s:GameState = new GameState(gameProps, physProps, qAgent, qAgent);
+
+  val qTableFile = new File("QTable.tsv")
+  val trainingEpochs = 10000
+
+  if (qTableFile.exists) {
+    qAgent.loadFromFile(qTableFile)
+  }
 
   while (true) {
-    1 to 1000 foreach { _ =>
-      while (!s.isFinished()) {
+    s.reset()
+    var hitCount:Long = 0
+    1 to trainingEpochs foreach { _ =>
+      while (!s.isFinished) {
         s.step()
       }
+      hitCount += s.rHits + s.lHits
       s.reset()
     }
-    new GameLoop(180, ui, s).run();
-    println("finished epoch: "+(s.lScore-s.rScore)+" "+(s.rHits+s.lHits))
-    s.reset()
+    println(f"Completed epoch... average hits: ${hitCount.toFloat/trainingEpochs}%6f")
+
+    qAgent.writeToFile(qTableFile)
   }
   println("finished")
 }

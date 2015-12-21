@@ -10,4 +10,6 @@ class Neuron(val label: Int) {
 
   def evaluate: Double = ???
   def addInputNeuron = ???
+
+  def getWeights: Seq[Double] = inputNeurons.map(_._2)
 }

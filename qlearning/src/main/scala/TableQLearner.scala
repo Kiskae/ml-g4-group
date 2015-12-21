@@ -5,11 +5,17 @@ import ui.SwingUI
 import java.io.{PrintStream, File}
 import java.util.Scanner
 
-class TableQLearner(gameProps:GameProperties, physProps:PhysicsProperties, gamma:Double=0.8, alpha:Double=0.9, randChance:Double=0.1) extends AbstractQLearner {
+class TableQLearner(gameProps:GameProperties, physProps:PhysicsProperties, gamma:Double=0.9, alpha:Double=0.05, randChance:Double=0.1, batchSize:Int=10) extends AbstractQLearner {
   //Initialize Q
   val qTable = Array.ofDim[Double](30*10*3*3,6)
 
+  //Random number generator
   val r = scala.util.Random
+
+  //Transaction history
+  val tHistSize:Int = 1000000
+  var tHistCount:Int = 0
+  val transHist = Array.ofDim[(Int, Int, Double, Int)](tHistSize)
 
   def mapX(x:Long) = 10+math.floor(x*10/(gameProps.sideWidth*2.0) min 19 max -10).toInt
   def mapY(y:Long) = (y*10/(gameProps.netHeight*3) min 9 max 0).toInt
@@ -55,8 +61,27 @@ class TableQLearner(gameProps:GameProperties, physProps:PhysicsProperties, gamma
   }
 
   override def updateQ(state: State, action: Int, nextState: State) {
+
+    //TODO Michael do we still need to add the state to the qtable?
     val row = qRow(state)
-    row(action) = (1-alpha)*row(action) + alpha*(reward(nextState) + gamma*maxAction(nextState)._2)
+
+    //Safe to history, using a modulo seems to be the fastest way.
+    transHist(tHistCount % tHistSize) =  (stateNdx(state), action, reward(nextState), stateNdx(nextState))
+    tHistCount += 1
+
+    //Perform minibatch
+    for(i <- 1 to batchSize) {
+
+      val t = transHist(r.nextInt(tHistCount) % tHistSize)
+
+      //TODO This canse be refactored by not store these.
+      val row = qTable(t._1)
+      val rowNext = qTable(t._4)
+
+      //row(action) = (1-alpha)*row(action) + alpha*(reward(nextState) + gamma*maxAction(nextState)._2)
+      row(t._2) = (1-alpha)*row(t._2) + alpha*(t._3 + gamma*rowNext.max)
+    }
+
   }
 
   override def reward(state: State) = {

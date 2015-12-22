@@ -20,8 +20,8 @@ object NEAT extends Logging {
     //    val lInput = new BallFollower(30000L / 2)
 
     train
-
     view
+
   }
 
   def view = {

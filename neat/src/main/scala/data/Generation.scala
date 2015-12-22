@@ -1,5 +1,6 @@
 package data
 
+import mutation.NetworkBreeder
 import neural.NeuralNetwork
 
 import scala.util.Random
@@ -42,6 +43,9 @@ class Generation(val species: Seq[Species]) {
       //For each specie: murder the bottom N percent, replace population
       //by breeding the rest.
 
+      val networks = specie.networks
+      networks.sortBy(_.score)
+      NetworkBreeder.breed(specie.networks(0), specie.networks(1))
     }
   }
 }

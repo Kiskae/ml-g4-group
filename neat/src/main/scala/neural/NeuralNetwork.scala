@@ -69,6 +69,9 @@ class NeuralNetwork(neuronsInCount: Int = 0, neuronsOutCount: Int = 0) extends S
   def neurons: Seq[Neuron] = hiddenNeurons ++ inputNeurons ++ outputNeurons
 
   def addHiddenNeuron(neuron: Neuron) = hiddenNeurons += neuron
+
+
+  override def toString = s"NeuralNetwork($score)"
 }
 
 object NeuralNetworkUtil {

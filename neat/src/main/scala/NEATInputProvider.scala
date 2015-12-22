@@ -6,14 +6,18 @@ class NEATInputProvider(val network: NeuralNetwork) extends AlwaysLeftInputProvi
   override def getInput(gameStateInterface: GameStateInterface): PlayerInput = {
     val ball = gameStateInterface.getBall
 
+    val ballX = (ball.getPosX + 400000) / 800000.0
+    val ballY = (ball.getPosY + 400000) / 800000.0
 
+    val playerX = (gameStateInterface.getMe.getPosX + 400000) / 800000.0
+    val playerY = (gameStateInterface.getMe.getPosY + 400000) / 800000.0
 
-    println(s"Feeding input: ${ball.getPosX}, ${ball.getPosY}, ${ball.getVelX}, ${ball.getVelY}")
-    network.setInput(ball.getPosX, ball.getPosY, ball.getVelX, ball.getVelY)
+    println(s"Feeding input: ${ballX}, ${ballY}, ${playerX}, ${playerY}")
+    network.setInput(ballX, ballY, playerX, playerY)
     network.evaluate
 
     val Seq(left, right, up) = network.getOutput
     println(s"Providing output: left = $left, right = $right, up = $up")
-    new PlayerInput(left >= 1.0, right >= 1.0, up >= 1.0)
+    new PlayerInput(left >= 0.5, right >= 0.5, up >= 0.5)
   }
 }

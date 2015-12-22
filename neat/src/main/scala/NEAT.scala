@@ -1,8 +1,10 @@
+import java.io.{FileInputStream, ObjectInputStream, ObjectOutputStream, FileOutputStream}
 import java.util.concurrent.TimeUnit
 
 import agent.{BallFollower, PlayerInputProvider}
 import grizzled.slf4j.Logging
 import mutation.NetworkCreator
+import neural.NeuralNetwork
 import server.{GameProperties, GameState, PhysicsProperties}
 import ui.SwingUI
 
@@ -16,8 +18,23 @@ object NEAT extends Logging {
   def main(args: Array[String]) = {
     logger.info("Starting NEAT!")
     //    val lInput = new BallFollower(30000L / 2)
+
+//    train
+
+    view
+  }
+
+  def view = {
     val rInput = new BallFollower(30000L / 2)
 
+    val neuralNetwork = ReadObjectFromFile[NeuralNetwork]("network.obj")
+
+    val lInput = new NEATInputProvider(neuralNetwork)
+    val score = evaluate(lInput, rInput, true, neuralNetwork)
+  }
+
+  def train = {
+    val rInput = new BallFollower(30000L / 2)
     val speciesCount = 5
     val networksPerSpecies = 10
     val inputLayerCount = 4
@@ -31,7 +48,7 @@ object NEAT extends Logging {
     for(i <- 1 to 10){
       for (neuralNetwork <- generation.networks) {
         val lInput = new NEATInputProvider(neuralNetwork)
-        val score = evaluate(lInput, rInput, true)
+        val score = evaluate(lInput, rInput, false, neuralNetwork)
         neuralNetwork.score = score
         if(score > 0) logger.info(s"Killed prototype. score = $score")
       }
@@ -40,7 +57,7 @@ object NEAT extends Logging {
     }
   }
 
-  def evaluate(lInput: PlayerInputProvider, rInput: PlayerInputProvider, showUI: Boolean) = {
+  def evaluate(lInput: PlayerInputProvider, rInput: PlayerInputProvider, showUI: Boolean, network: NeuralNetwork) = {
     val gameProps = new GameProperties()
     val physProps = new PhysicsProperties()
     val s = new GameState(gameProps, physProps, lInput, rInput)
@@ -54,8 +71,9 @@ object NEAT extends Logging {
     val NS_PER_SEC = TimeUnit.SECONDS.toNanos(1)
     val MS_PER_SEC = TimeUnit.SECONDS.toMillis(1);
     val framePeriod = NS_PER_SEC / maxFps;
+    var run = true
 
-    while ((stepCounter - latestPointGainedStep) < maxIdleSteps) {
+    while ((stepCounter - latestPointGainedStep) < maxIdleSteps && run) {
       val beginTime = System.nanoTime();
       s.step()
       if(showUI) ui.display(s)
@@ -64,6 +82,13 @@ object NEAT extends Logging {
         latestPointGainedStep = stepCounter
         latestScore = s.getMyScore
         println(s"$stepCounter: $latestScore")
+
+        if(latestScore > 10000){
+          val oos = new ObjectOutputStream(new FileOutputStream("network.obj"))
+          oos.writeObject(network)
+          oos.close
+          run = false
+        }
       }
 
       if(showUI) {
@@ -99,4 +124,12 @@ object NEAT extends Logging {
     latestScore
   }
 
+  def ReadObjectFromFile[A](filename: String)(implicit m:scala.reflect.Manifest[A]): A = {
+    val input = new ObjectInputStream(new FileInputStream(filename))
+    val obj = input.readObject()
+    obj match {
+      case x if m.erasure.isInstance(x) => x.asInstanceOf[A]
+      case _ => sys.error("Type not what was expected when reading from file")
+    }
+  }
 }

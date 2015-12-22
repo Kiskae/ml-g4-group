@@ -5,7 +5,7 @@ import scala.collection.mutable.ArrayBuffer
 /**
   * Created by bas on 21-12-15.
   */
-class Neuron(val label: Int) {
+class Neuron(val label: Int) extends Serializable{
   var inputNeurons = new ArrayBuffer[(Neuron, Double)]
   /** value is used for the input values. */
   var value = 0.0

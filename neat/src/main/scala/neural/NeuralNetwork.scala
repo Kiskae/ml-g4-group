@@ -5,7 +5,7 @@ import scala.collection.mutable.ArrayBuffer
 /**
   * Created by bas on 21-12-15.
   */
-class NeuralNetwork {
+class NeuralNetwork extends Serializable{
   var numberOfNeurons = 0
   var hiddenNeurons = new ArrayBuffer[Neuron]
   var inputNeurons = new ArrayBuffer[Neuron]

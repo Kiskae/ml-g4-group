@@ -1,8 +1,7 @@
 package mutation
 
-import data.{ENeuralNetwork, Generation, Species}
+import data.{Generation, Species}
 import neural.NeuralNetwork
-import org.neuroph.core.learning.LearningRule
 
 object NetworkCreator {
   def generation(speciesCount: Int, networksPerSpecies: Int, inputLayerCount: Int, outputLayerCount: Int): Generation = {

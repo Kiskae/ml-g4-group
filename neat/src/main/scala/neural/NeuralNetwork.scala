@@ -5,42 +5,28 @@ import scala.collection.mutable.ArrayBuffer
 /**
   * Created by bas on 21-12-15.
   */
-class NeuralNetwork extends Serializable{
+class NeuralNetwork(neuronsInCount: Int = 0, neuronsOutCount: Int = 0) extends Serializable {
   var numberOfNeurons = 0
   var hiddenNeurons = new ArrayBuffer[Neuron]
-  var inputNeurons = new ArrayBuffer[Neuron]
-  var outputNeurons = new ArrayBuffer[Neuron]
+  var inputNeurons = ArrayBuffer.fill[Neuron](neuronsInCount)(newNeuron)
+  var outputNeurons = ArrayBuffer.fill[Neuron](neuronsOutCount)(newNeuron)
   var output: Seq[Double] = null
   var score = 0
 
-  def this(neuronsInCount: Int, neuronsOutCount: Int) {
-    this
-    inputNeurons = ArrayBuffer.fill[Neuron](neuronsInCount)(new Neuron(getNextLabelAndIncrement))
-    outputNeurons = ArrayBuffer.fill[Neuron](neuronsOutCount)(new Neuron(getNextLabelAndIncrement))
-  }
+  def newNeuron: Neuron = new Neuron(getNextLabelAndIncrement)
 
-  def getNextLabelAndIncrement = {
+  private def getNextLabelAndIncrement = {
     val t = numberOfNeurons
     numberOfNeurons += 1
     t
   }
 
-  def neurons: Seq[Neuron] = hiddenNeurons ++ inputNeurons ++ outputNeurons
-
   def createConnection(startNeuron: Neuron, endNeuron: Neuron, weight: Double) = {
     endNeuron.addInputNeuron(startNeuron, weight)
   }
 
-  def setInputNeurons(inputNeurons: Seq[Neuron]) = {
-    this.inputNeurons = inputNeurons.to[ArrayBuffer]
-  }
-
-  def setOutputNeurons(outputNeurons: Seq[Neuron]) = {
-    this.outputNeurons = outputNeurons.to[ArrayBuffer]
-  }
-
   def setInput(inputs: Double*) = {
-    if(inputs.length != inputNeurons.length){
+    if (inputs.length != inputNeurons.length) {
       throw new IllegalArgumentException("Size of input values doesn't match size of input neurons.")
     }
 
@@ -64,13 +50,23 @@ class NeuralNetwork extends Serializable{
 
   def getInputNeurons: Seq[Neuron] = inputNeurons
 
+  def setInputNeurons(inputNeurons: Seq[Neuron]) = {
+    this.inputNeurons = inputNeurons.to[ArrayBuffer]
+  }
+
   def getOutputNeurons: Seq[Neuron] = outputNeurons
 
+  def setOutputNeurons(outputNeurons: Seq[Neuron]) = {
+    this.outputNeurons = outputNeurons.to[ArrayBuffer]
+  }
+
   def getWeights: Seq[Double] = neurons.flatMap(_.getWeights)
+
+  def neurons: Seq[Neuron] = hiddenNeurons ++ inputNeurons ++ outputNeurons
 
   def addHiddenNeuron(neuron: Neuron) = hiddenNeurons += neuron
 }
 
 object NeuralNetworkUtil {
-  def treshold(value: Double): Int = if(value < 0) 0 else 1
+  def threshold(value: Double): Int = if (value < 0) 0 else 1
 }

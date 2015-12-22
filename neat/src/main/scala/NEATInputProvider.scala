@@ -12,8 +12,11 @@ class NEATInputProvider(val network: NeuralNetwork) extends AlwaysLeftInputProvi
     val playerX = (gameStateInterface.getMe.getPosX + 400000) / 800000.0
     val playerY = (gameStateInterface.getMe.getPosY - 30000) / (250000.0)
 
-    //println(s"Feeding input: ${ballX}, ${ballY}, ${playerX}, ${playerY}")
-    network.setInput(ballX, ballY, playerX, playerY)
+    val playerVelX = gameStateInterface.getMe.getVelX / 4500.0
+    val playerVelY = gameStateInterface.getMe.getVelY / 15100.0
+
+//    println(s"Feeding input: ${ballX}, ${ballY}, ${playerX}, ${playerY}")
+    network.setInput(ballX, ballY, playerX, playerY, playerVelX, playerVelY)
     network.evaluate
 
     val Seq(left, right, up) = network.getOutput

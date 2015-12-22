@@ -1,7 +1,7 @@
 import java.io.{FileInputStream, ObjectInputStream, ObjectOutputStream, FileOutputStream}
 import java.util.concurrent.TimeUnit
 
-import agent.{BallFollower, PlayerInputProvider}
+import agent.{KeyboardInputProvider, BallFollower, PlayerInputProvider}
 import grizzled.slf4j.Logging
 import mutation.NetworkCreator
 import neural.NeuralNetwork
@@ -19,7 +19,7 @@ object NEAT extends Logging {
     logger.info("Starting NEAT!")
     //    val lInput = new BallFollower(30000L / 2)
 
-//    train
+    train
 
     view
   }
@@ -37,7 +37,7 @@ object NEAT extends Logging {
     val rInput = new BallFollower(30000L / 2)
     val speciesCount = 5
     val networksPerSpecies = 10
-    val inputLayerCount = 4
+    val inputLayerCount = 6
     val outputLayerCount = 3
     val generation = NetworkCreator.generation(speciesCount, networksPerSpecies, inputLayerCount, outputLayerCount)
 

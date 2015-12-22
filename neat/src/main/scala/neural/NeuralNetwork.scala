@@ -1,5 +1,7 @@
 package neural
 
+import data.InnovationPool
+
 import scala.collection.mutable.ArrayBuffer
 
 /**
@@ -22,7 +24,9 @@ class NeuralNetwork(neuronsInCount: Int = 0, neuronsOutCount: Int = 0) extends S
   }
 
   def createConnection(startNeuron: Neuron, endNeuron: Neuron, weight: Double) = {
-    endNeuron.addInputNeuron(startNeuron, weight)
+
+    val innovationNumber = InnovationPool.getInnovationNumber((startNeuron, endNeuron))
+    endNeuron.addInputNeuron(startNeuron, weight, innovationNumber)
   }
 
   def setInput(inputs: Double*) = {

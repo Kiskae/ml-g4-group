@@ -6,7 +6,7 @@ import scala.collection.mutable.ArrayBuffer
   * Created by bas on 21-12-15.
   */
 class Neuron(val label: Int) extends Serializable{
-  var inputNeurons = new ArrayBuffer[(Neuron, Double)]
+  var inputNeurons = new ArrayBuffer[(Neuron, Double, Int)]
   /** value is used for the input values. */
   var value = 0.0
   var valueIsSet = false
@@ -25,8 +25,8 @@ class Neuron(val label: Int) extends Serializable{
     }
   }
 
-  def addInputNeuron(inputNeuron: Neuron, weight: Double) = {
-    inputNeurons += Tuple2(inputNeuron, weight)
+  def addInputNeuron(inputNeuron: Neuron, weight: Double, innovationNumber: Int) = {
+    inputNeurons += Tuple3(inputNeuron, weight, innovationNumber)
   }
 
   def getWeights: Seq[Double] = inputNeurons.map(_._2)

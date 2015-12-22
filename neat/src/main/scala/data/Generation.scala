@@ -9,12 +9,14 @@ import scala.util.Random
   */
 class Generation(val species: Seq[Species]) {
   var currentGeneration = 0
+  val eliminationPercentage = 0.4
 
   def networks: Seq[NeuralNetwork] = {
     species.flatMap(_.networks)
   }
 
   def evolve() = {
+
 
     mutate
     breed
@@ -31,11 +33,15 @@ class Generation(val species: Seq[Species]) {
 
       val outputNeurons = n.getOutputNeurons
       val endNeuron = outputNeurons(r.nextInt(n.getOutputsCount))
-      n.createConnection(startNeuron, endNeuron, r.nextDouble()) //TODO what is the range of the weights?
+      n.createConnection(startNeuron, endNeuron, r.nextDouble() * (r.nextInt(9) - 4)) //TODO what is the range of the weights?
     }
   }
 
   def breed() = {
+    for(specie <- species){
+      //For each specie: murder the bottom N percent, replace population
+      //by breeding the rest.
 
+    }
   }
 }

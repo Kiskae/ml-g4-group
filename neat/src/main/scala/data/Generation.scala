@@ -1,5 +1,7 @@
 package data
 
+import neural.NeuralNetwork
+
 import scala.util.Random
 
 /**
@@ -8,7 +10,7 @@ import scala.util.Random
 class Generation(val species: Seq[Species]) {
   var currentGeneration = 0
 
-  def networks: Seq[ENeuralNetwork[_]] = {
+  def networks: Seq[NeuralNetwork] = {
     species.flatMap(_.networks)
   }
 

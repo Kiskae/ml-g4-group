@@ -1,6 +1,7 @@
 package mutation
 
 import data.{ENeuralNetwork, Generation, Species}
+import neural.NeuralNetwork
 import org.neuroph.core.learning.LearningRule
 
 object NetworkCreator {
@@ -12,14 +13,12 @@ object NetworkCreator {
     })
   }
 
-  private def createSpecies(networksPerSpecies: Int)(createNetwork: => ENeuralNetwork[_]): Species = {
-    new Species(Seq.fill[ENeuralNetwork[_]](networksPerSpecies)(createNetwork))
+  private def createSpecies(networksPerSpecies: Int)(createNetwork: => NeuralNetwork): Species = {
+    new Species(Seq.fill[NeuralNetwork](networksPerSpecies)(createNetwork))
   }
 
-  private def createNetwork(inputLayerCount: Int, outputLayerCount: Int): ENeuralNetwork[_] = {
-    val network = new ENeuralNetwork[LearningRule]
-    network.makeInputLayer(inputLayerCount)
-    network.makeOutputLayer(outputLayerCount)
+  private def createNetwork(inputLayerCount: Int, outputLayerCount: Int): NeuralNetwork = {
+    val network = new NeuralNetwork(inputLayerCount, outputLayerCount)
     network
   }
 }

@@ -1,10 +1,10 @@
 package mutation
 
-import org.neuroph.core.NeuralNetwork
-import org.neuroph.core.learning.LearningRule
+import neural.NeuralNetwork
+
 
 object NetworkMutator {
-  def mutate[L <: LearningRule](network: NeuralNetwork[L]): NeuralNetwork[L] = {
+  def mutate(network: NeuralNetwork): NeuralNetwork = {
     ???
   }
 }

@@ -11,6 +11,7 @@ class NeuralNetwork {
   var inputNeurons = new ArrayBuffer[Neuron]
   var outputNeurons = new ArrayBuffer[Neuron]
   var output: Seq[Double] = null
+  var score = 0
 
   def this(neuronsInCount: Int, neuronsOutCount: Int) {
     this

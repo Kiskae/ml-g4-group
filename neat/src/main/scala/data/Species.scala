@@ -1,3 +1,5 @@
 package data
 
-case class Species(var networks: Seq[ENeuralNetwork[_]])
+import neural.NeuralNetwork
+
+case class Species(var networks: Seq[NeuralNetwork])

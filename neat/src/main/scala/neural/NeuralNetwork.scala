@@ -12,6 +12,7 @@ class NeuralNetwork(neuronsInCount: Int = 0, neuronsOutCount: Int = 0) extends S
   var hiddenNeurons = new ArrayBuffer[Neuron]
   var inputNeurons = ArrayBuffer.fill[Neuron](neuronsInCount)(newNeuron)
   var outputNeurons = ArrayBuffer.fill[Neuron](neuronsOutCount)(newNeuron)
+  var connections = new ArrayBuffer[(Neuron, Neuron, Double, Int)]
   var output: Seq[Double] = null
   var score = 0
 
@@ -23,10 +24,22 @@ class NeuralNetwork(neuronsInCount: Int = 0, neuronsOutCount: Int = 0) extends S
     t
   }
 
+  /**
+    * If the neurons don't yet exist in the network, add them.
+    * Assumes that the input and output neurons exist.
+    */
   def createConnection(startNeuron: Neuron, endNeuron: Neuron, weight: Double) = {
+    if(!inputNeurons.contains(startNeuron) && !hiddenNeurons.contains(startNeuron)){
+      hiddenNeurons += startNeuron
+    }
+
+    if(!outputNeurons.contains(endNeuron) && !hiddenNeurons.contains(endNeuron)){
+      hiddenNeurons += endNeuron
+    }
 
     val innovationNumber = InnovationPool.getInnovationNumber((startNeuron, endNeuron))
     endNeuron.addInputNeuron(startNeuron, weight, innovationNumber)
+    connections += Tuple4(startNeuron, endNeuron, weight, innovationNumber)
   }
 
   def setInput(inputs: Double*) = {
@@ -70,6 +83,19 @@ class NeuralNetwork(neuronsInCount: Int = 0, neuronsOutCount: Int = 0) extends S
 
   def addHiddenNeuron(neuron: Neuron) = hiddenNeurons += neuron
 
+  def getInnovationNumbers: Seq[Int] = {
+    connections.map(_._4)
+  }
+
+  def getConnectionByNumber(innovationNumber: Int): Option[(Neuron, Neuron, Double, Int)] = {
+    val innovationNumbers = getInnovationNumbers
+
+    if(innovationNumbers.contains(innovationNumber)){
+      Some(connections(connections.indexOf(innovationNumber)))
+    }else{
+      None
+    }
+  }
 
   override def toString = s"NeuralNetwork($score)"
 }

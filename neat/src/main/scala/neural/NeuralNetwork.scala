@@ -10,13 +10,33 @@ import scala.collection.mutable.ArrayBuffer
 class NeuralNetwork(neuronsInCount: Int = 0, neuronsOutCount: Int = 0) extends Serializable {
   var numberOfNeurons = 0
   var hiddenNeurons = new ArrayBuffer[Neuron]
-  var inputNeurons = ArrayBuffer.fill[Neuron](neuronsInCount)(newNeuron)
-  var outputNeurons = ArrayBuffer.fill[Neuron](neuronsOutCount)(newNeuron)
+  var inputNeurons = makeInputNeurons(neuronsInCount)
+  var outputNeurons = makeOutputNeurons(neuronsOutCount, neuronsInCount)
   var connections = new ArrayBuffer[(Neuron, Neuron, Double, Int)]
   var output: Seq[Double] = null
   var score = 0
 
   def newNeuron: Neuron = new Neuron(getNextLabelAndIncrement)
+
+  def makeInputNeurons(neuronsInCount: Int): Seq[Neuron] = {
+    var inputNeurons = new ArrayBuffer[Neuron]
+
+    for(i <- 0 until neuronsInCount){
+      inputNeurons += new Neuron(i)
+    }
+
+    inputNeurons
+  }
+
+  def makeOutputNeurons(neuronsOutCount: Int, neuronsInCount: Int): Seq[Neuron] = {
+    var outputNeurons = new ArrayBuffer[Neuron]
+
+    for(i <- 0 until neuronsOutCount){
+      outputNeurons += new Neuron(i + neuronsInCount)
+    }
+
+    outputNeurons
+  }
 
   private def getNextLabelAndIncrement = {
     val t = numberOfNeurons
@@ -38,8 +58,11 @@ class NeuralNetwork(neuronsInCount: Int = 0, neuronsOutCount: Int = 0) extends S
     }
 
     val innovationNumber = InnovationPool.getInnovationNumber((startNeuron, endNeuron))
-    endNeuron.addInputNeuron(startNeuron, weight, innovationNumber)
-    connections += Tuple4(startNeuron, endNeuron, weight, innovationNumber)
+
+    if(!endNeuron.getInputNeurons.contains(startNeuron)){
+      endNeuron.addInputNeuron(startNeuron, weight, innovationNumber)
+      connections += Tuple4(startNeuron, endNeuron, weight, innovationNumber)
+    }
   }
 
   def setInput(inputs: Double*) = {

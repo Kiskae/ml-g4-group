@@ -45,7 +45,7 @@ object NEAT extends Logging {
   def train = {
     val rInput = new BallFollower(30000L / 2)
     val speciesCount = 5
-    val networksPerSpecies = 10
+    val networksPerSpecies = 100
     val inputLayerCount = 6
     val outputLayerCount = 3
     val generation = NetworkCreator.generation(speciesCount, networksPerSpecies, inputLayerCount, outputLayerCount)

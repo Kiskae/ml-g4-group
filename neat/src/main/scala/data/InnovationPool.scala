@@ -13,7 +13,7 @@ object InnovationPool {
 
   def getInnovationNumber(neurons : (Neuron, Neuron)): Int = {
     val innovationNumber = pool.get(neurons)
-
+println("innovation number = " + innovationNumber)
     if(innovationNumber != None){
       innovationNumber.get
     }else{

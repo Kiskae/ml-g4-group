@@ -54,7 +54,7 @@ object NEAT extends Logging {
 
     generation.evolve
 
-    for (i <- 1 to 10) {
+    for (i <- 1 to 12) {
       for (neuralNetwork <- generation.networks) {
         val lInput = new NEATInputProvider(neuralNetwork)
         val score = evaluate(lInput, rInput, false, neuralNetwork)

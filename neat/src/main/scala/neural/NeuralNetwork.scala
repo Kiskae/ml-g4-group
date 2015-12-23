@@ -91,7 +91,7 @@ class NeuralNetwork(neuronsInCount: Int = 0, neuronsOutCount: Int = 0) extends S
     val innovationNumbers = getInnovationNumbers
 
     if(innovationNumbers.contains(innovationNumber)){
-      Some(connections(connections.indexOf(innovationNumber)))
+      Some(connections(innovationNumbers.indexOf(innovationNumber)))
     }else{
       None
     }

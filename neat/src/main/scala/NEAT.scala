@@ -44,8 +44,8 @@ object NEAT extends Logging {
 
   def train = {
     val rInput = new BallFollower(30000L / 2)
-    val generationCount = 15
-    val speciesCount = 2
+    val generationCount = 5
+    val speciesCount = 5
     val networksPerSpecies = 100
     val inputLayerCount = 6
     val outputLayerCount = 3
@@ -134,6 +134,6 @@ object NEAT extends Logging {
     }
 
     ui.dispose()
-    latestScore
+    latestScore - s.getOpponentScore
   }
 }

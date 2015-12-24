@@ -2,4 +2,8 @@ package data
 
 import neural.NeuralNetwork
 
-case class Species(var networks: Seq[NeuralNetwork])
+class Species(var networks: Seq[NeuralNetwork]) {
+  def getBestNetwork: NeuralNetwork = {
+    networks.sortBy(x => x.score).head
+  }
+}

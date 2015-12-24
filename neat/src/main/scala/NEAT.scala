@@ -64,6 +64,7 @@ object NEAT extends Logging {
         if (score > 0) logger.info(s"Killed prototype. score = $score")
       }
 
+      println(generation.getBestPrototypes)
       generation.evolve
     }
   }

@@ -91,4 +91,8 @@ class Generation(var species: Seq[Species]) {
     }
     sys.error(f"this should never happen")  // needed so it will compile
   }
+
+  def getBestPrototypes: Seq[NeuralNetwork] = {
+    species.map(_.getBestNetwork)
+  }
 }

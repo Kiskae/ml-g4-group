@@ -43,4 +43,7 @@ class Neuron(val label: Int) extends Serializable{
   def getInputLabels: Seq[Int] = {
     inputNeurons.map(_._3)
   }
+
+
+  override def toString = s"Neuron($label)"
 }

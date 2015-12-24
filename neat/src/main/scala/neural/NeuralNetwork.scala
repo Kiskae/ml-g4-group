@@ -102,7 +102,7 @@ class NeuralNetwork(neuronsInCount: Int = 0, neuronsOutCount: Int = 0) extends S
     this.outputNeurons = outputNeurons.to[ArrayBuffer]
   }
 
-  def getWeights: Seq[Double] = neurons.flatMap(_.getWeights)
+  def getWeights: Seq[Double] = connections.map(_._3)
 
   def neurons: Seq[Neuron] = hiddenNeurons ++ inputNeurons ++ outputNeurons
 

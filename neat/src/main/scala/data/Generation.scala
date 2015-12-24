@@ -13,6 +13,7 @@ import scala.util.Random
 class Generation(var species: Seq[Species]) {
   var currentGeneration = 0
   val eliminationPercentage = 0.4
+  val newConnectionProbability = 0.2
 
   def networks: Seq[NeuralNetwork] = {
     species.flatMap(_.networks)
@@ -31,12 +32,14 @@ class Generation(var species: Seq[Species]) {
     val r = new Random
 
     for(n <- networks){
-      val inputNeurons = n.getInputNeurons
-      val startNeuron = inputNeurons(r.nextInt(n.getInputsCount))
+      if(r.nextInt((1 / newConnectionProbability).toInt) == 0) {
+        val inputNeurons = n.getInputNeurons
+        val startNeuron = inputNeurons(r.nextInt(n.getInputsCount))
 
-      val outputNeurons = n.getOutputNeurons
-      val endNeuron = outputNeurons(r.nextInt(n.getOutputsCount))
-      n.createConnection(startNeuron, endNeuron, r.nextDouble() * (r.nextInt(9) - 4)) //TODO what is the range of the weights?
+        val outputNeurons = n.getOutputNeurons
+        val endNeuron = outputNeurons(r.nextInt(n.getOutputsCount))
+        n.createConnection(startNeuron, endNeuron, r.nextDouble() * (r.nextInt(9) - 4)) //TODO what is the range of the weights?
+      }
     }
   }
 

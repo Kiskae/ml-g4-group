@@ -13,8 +13,8 @@ import ui.SwingUI
   */
 object NEAT extends Logging {
 
-  val maxIdleSteps = 5000
-  val cutOffScore = 20
+  val maxIdleSteps = 500
+  val cutOffScore = 10
 
   def main(args: Array[String]) = {
     logger.info("Starting NEAT!")
@@ -45,9 +45,9 @@ object NEAT extends Logging {
 
   def train = {
     val rInput = new BallFollower(30000L / 2)
-    val generationCount = 2
+    val generationCount = 20
     val speciesCount = 5
-    val networksPerSpecies = 400
+    val networksPerSpecies = 100
     val inputLayerCount = 6
     val outputLayerCount = 3
     val generation = NetworkCreator.generation(speciesCount, networksPerSpecies, inputLayerCount, outputLayerCount)
@@ -106,10 +106,10 @@ object NEAT extends Logging {
 
         if (s.getMyScore >= cutOffScore) {
           run = false
-          println(s"Our player reached score of $cutOffScore. weights: " + network.getWeights)
+//          println(s"Our player reached score of $cutOffScore. weights: " + network.getWeights)
         }else if(s.getOpponentScore >= cutOffScore) {
           run = false
-          println(s"Opponent reached score of $cutOffScore. weights: " + network.getWeights)
+//          println(s"Opponent reached score of $cutOffScore. weights: " + network.getWeights)
         }
       }
 

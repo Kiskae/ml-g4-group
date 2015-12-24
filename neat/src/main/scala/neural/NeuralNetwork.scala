@@ -14,7 +14,7 @@ class NeuralNetwork(neuronsInCount: Int = 0, neuronsOutCount: Int = 0) extends S
   var outputNeurons = makeOutputNeurons(neuronsOutCount, neuronsInCount)
   var connections = new ArrayBuffer[(Neuron, Neuron, Double, Int)]
   var output: Seq[Double] = null
-  var score = 0
+  var score = 0.0
 
   def newNeuron: Neuron = new Neuron(getNextLabelAndIncrement)
 
@@ -23,6 +23,7 @@ class NeuralNetwork(neuronsInCount: Int = 0, neuronsOutCount: Int = 0) extends S
 
     for(i <- 0 until neuronsInCount){
       inputNeurons += new Neuron(i)
+      numberOfNeurons += 1
     }
 
     inputNeurons
@@ -33,6 +34,7 @@ class NeuralNetwork(neuronsInCount: Int = 0, neuronsOutCount: Int = 0) extends S
 
     for(i <- 0 until neuronsOutCount){
       outputNeurons += new Neuron(i + neuronsInCount)
+      numberOfNeurons += 1
     }
 
     outputNeurons
@@ -49,17 +51,17 @@ class NeuralNetwork(neuronsInCount: Int = 0, neuronsOutCount: Int = 0) extends S
     * Assumes that the input and output neurons exist.
     */
   def createConnection(startNeuron: Neuron, endNeuron: Neuron, weight: Double) = {
-    if(!inputNeurons.contains(startNeuron) && !hiddenNeurons.contains(startNeuron)){
+    if(!inputNeurons.map(_.label).contains(startNeuron.label) && !hiddenNeurons.map(_.label).contains(startNeuron.label)){
       hiddenNeurons += startNeuron
     }
 
-    if(!outputNeurons.contains(endNeuron) && !hiddenNeurons.contains(endNeuron)){
+    if(!outputNeurons.map(_.label).contains(endNeuron.label) && !hiddenNeurons.map(_.label).contains(endNeuron.label)){
       hiddenNeurons += endNeuron
     }
 
     val innovationNumber = InnovationPool.getInnovationNumber((startNeuron, endNeuron))
 
-    if(!endNeuron.getInputNeurons.contains(startNeuron)){
+    if(!endNeuron.getInputLabels.contains(startNeuron.label)){
       endNeuron.addInputNeuron(startNeuron, weight, innovationNumber)
       connections += Tuple4(startNeuron, endNeuron, weight, innovationNumber)
     }

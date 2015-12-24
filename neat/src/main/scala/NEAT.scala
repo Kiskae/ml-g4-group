@@ -13,7 +13,8 @@ import ui.SwingUI
   */
 object NEAT extends Logging {
 
-  val maxIdleSteps = 500
+  val maxIdleSteps = 5000
+  val cutOffScore = 20
 
   def main(args: Array[String]) = {
     logger.info("Starting NEAT!")
@@ -44,18 +45,18 @@ object NEAT extends Logging {
 
   def train = {
     val rInput = new BallFollower(30000L / 2)
-    val generationCount = 5
+    val generationCount = 2
     val speciesCount = 5
-    val networksPerSpecies = 100
+    val networksPerSpecies = 400
     val inputLayerCount = 6
     val outputLayerCount = 3
     val generation = NetworkCreator.generation(speciesCount, networksPerSpecies, inputLayerCount, outputLayerCount)
 
     //TODO for each NN in generation: run 1 "game" and evaluate.
 
-    generation.evolve
 
     for (i <- 0 until generationCount) {
+      generation.evolve
       println("Starting new generation!")
       for (neuralNetwork <- generation.networks) {
         val lInput = new NEATInputProvider(neuralNetwork)
@@ -64,9 +65,17 @@ object NEAT extends Logging {
         if (score > 0) logger.info(s"Killed prototype. score = $score")
       }
 
-      println(generation.getBestPrototypes)
-      generation.evolve
+      val bestPrototypes = generation.getBestPrototypes
+      println(bestPrototypes)
+      println(bestPrototypes.map(_.getWeights.length))
     }
+
+    //store best network
+    val bestNetwork = generation.networks.sortBy(x => x.score).last
+    val oos = new ObjectOutputStream(new FileOutputStream("network.obj"))
+    oos.writeObject(bestNetwork)
+    oos.close
+
   }
 
   def evaluate(lInput: PlayerInputProvider, rInput: PlayerInputProvider, showUI: Boolean, network: NeuralNetwork) = {
@@ -95,13 +104,12 @@ object NEAT extends Logging {
         latestScore = s.getMyScore
 //        println(s"$stepCounter: $latestScore")
 
-        if (latestScore > 10000) {
-          val oos = new ObjectOutputStream(new FileOutputStream("network.obj"))
-          oos.writeObject(network)
-          oos.close
+        if (s.getMyScore >= cutOffScore) {
           run = false
-
-          println("weights: " + network.getWeights)
+          println(s"Our player reached score of $cutOffScore. weights: " + network.getWeights)
+        }else if(s.getOpponentScore >= cutOffScore) {
+          run = false
+          println(s"Opponent reached score of $cutOffScore. weights: " + network.getWeights)
         }
       }
 
@@ -135,6 +143,8 @@ object NEAT extends Logging {
     }
 
     ui.dispose()
-    latestScore - s.getOpponentScore
+//    latestScore - s.getOpponentScore
+    if(latestScore != s.getMyScore) sys.error("shouldnt happen")
+    (latestScore - s.getOpponentScore)/ stepCounter.toFloat * 1000
   }
 }

@@ -39,4 +39,8 @@ class Neuron(val label: Int) extends Serializable{
   def getInputNeurons: Seq[Neuron] = {
     inputNeurons.map(_._1)
   }
+
+  def getInputLabels: Seq[Int] = {
+    inputNeurons.map(_._3)
+  }
 }

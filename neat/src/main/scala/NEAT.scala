@@ -45,7 +45,7 @@ object NEAT extends Logging {
 
   def train = {
     val rInput = new BallFollower(30000L / 2)
-    val generationCount = 10
+    val generationCount = 20
     val speciesCount = 5
     val networksPerSpecies = 100
     val inputLayerCount = 6
@@ -66,8 +66,8 @@ object NEAT extends Logging {
       }
 
       val bestPrototypes = generation.getBestPrototypes
-      println(bestPrototypes)
-      println(bestPrototypes.map(_.getWeights.length))
+      println("Best prototypes: " + bestPrototypes)
+      println("Best prototypes weights: " + bestPrototypes.map(_.getWeights.length))
     }
 
     //store best network

@@ -45,7 +45,7 @@ object NEAT extends Logging {
 
   def train = {
     val rInput = new BallFollower(30000L / 2)
-    val generationCount = 20
+    val generationCount = 10
     val speciesCount = 5
     val networksPerSpecies = 100
     val inputLayerCount = 6
@@ -57,7 +57,7 @@ object NEAT extends Logging {
 
     for (i <- 0 until generationCount) {
       generation.evolve
-      println("Starting new generation!")
+      println(s"Starting generation $i/$generationCount.")
       for (neuralNetwork <- generation.networks) {
         val lInput = new NEATInputProvider(neuralNetwork)
         val score = evaluate(lInput, rInput, false, neuralNetwork)

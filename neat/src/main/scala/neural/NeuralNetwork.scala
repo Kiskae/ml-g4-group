@@ -12,7 +12,7 @@ class NeuralNetwork(neuronsInCount: Int = 0, neuronsOutCount: Int = 0) extends S
   var hiddenNeurons = new ArrayBuffer[Neuron]
   var inputNeurons = makeInputNeurons(neuronsInCount)
   var outputNeurons = makeOutputNeurons(neuronsOutCount, neuronsInCount)
-  var connections = new ArrayBuffer[(Neuron, Neuron, Double, Int)]
+  private var connections = new ArrayBuffer[(Neuron, Neuron, Double, Int)]
   var output: Seq[Double] = null
   var score = 0.0
 

@@ -12,7 +12,7 @@ import scala.util.Random
   */
 class Generation(var species: Seq[Species]) {
   var currentGeneration = 0
-  val eliminationPercentage = 0.4
+  val eliminationPercentage = 0.9
   val newConnectionProbability = 0.2
 
   def networks: Seq[NeuralNetwork] = {
@@ -57,9 +57,14 @@ class Generation(var species: Seq[Species]) {
 
       //create distribution map
       var distribution = mutable.Map[NeuralNetwork, Double]()
+      val fitnessMin = networks.map(_.score) min
+      val fitnessMax = networks.map(_.score) max
+
+      networks.foreach(x => x.score = x.score + Math.abs(fitnessMin) )
       val fitnessSum = networks.map(_.score) sum
 
       // TODO what to do if the fitness sum is zero? all prototypes are bad, kill off species?
+      //TODO what about negative fitness? Will mess up the distribution
       if(fitnessSum == 0) return
 
       for(network <- networks){

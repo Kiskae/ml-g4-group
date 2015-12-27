@@ -14,11 +14,7 @@ object NetworkBreeder {
     offspring.setInputNeurons(recreate(network1.getInputNeurons))
     offspring.setOutputNeurons(recreate(network1.getOutputNeurons))
 
-    if(network1.score > network2.score){
-      offspring.setHiddenNeurons(recreate(network1.getHiddenNeurons))
-    }else{
-      offspring.setHiddenNeurons(recreate(network2.getHiddenNeurons))
-    }
+    offspring.ensureHiddenNeurons(network2.getHiddenNeurons.map(_.label) ++ network1.getHiddenNeurons.map(_.label))
 
     val innovationNumbers = (network1.getInnovationNumbers ++ network2.getInnovationNumbers).distinct.sorted
 

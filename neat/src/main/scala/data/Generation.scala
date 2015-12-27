@@ -15,7 +15,7 @@ class Generation(var species: Seq[Species]) {
   var currentGeneration = 0
   val eliminationPercentage = 0.5
   val newConnectionProbability = 0.2
-  val newNodeProbability = 0.6
+  val newNodeProbability = 0.1
 
   def networks: Seq[NeuralNetwork] = {
     species.flatMap(_.networks)
@@ -52,7 +52,6 @@ class Generation(var species: Seq[Species]) {
 
       if(r.nextInt((1 / newNodeProbability).toInt) == 0) {
         val hiddenNeuron = n.newNeuron
-        println("new node")
         n.addHiddenNeuron(hiddenNeuron)
       }
     }

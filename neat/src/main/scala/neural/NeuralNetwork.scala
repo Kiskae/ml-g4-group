@@ -53,13 +53,11 @@ class NeuralNetwork(neuronsInCount: Int = 0, neuronsOutCount: Int = 0) extends S
   def createConnection(startNeuron: Neuron, endNeuron: Neuron, weight: Double) = {
     if(!inputNeurons.map(_.label).contains(startNeuron.label) && !hiddenNeurons.map(_.label).contains(startNeuron.label)){
       hiddenNeurons += startNeuron
-      println("first if branch of createconnection hier------------")
       numberOfNeurons += 1
     }
 
     if(!outputNeurons.map(_.label).contains(endNeuron.label) && !hiddenNeurons.map(_.label).contains(endNeuron.label)){
       hiddenNeurons += endNeuron
-      println("second if branch of createconnection hier------------")
       numberOfNeurons += 1
     }
 
@@ -114,7 +112,6 @@ class NeuralNetwork(neuronsInCount: Int = 0, neuronsOutCount: Int = 0) extends S
 
   def addHiddenNeuron(neuron: Neuron) = {
     hiddenNeurons += neuron
-    println("add hidden neuron ----")
   }
 
   def getInnovationNumbers: Seq[Int] = {
@@ -146,9 +143,9 @@ class NeuralNetwork(neuronsInCount: Int = 0, neuronsOutCount: Int = 0) extends S
 
   def getHiddenNeurons: Seq[Neuron] = hiddenNeurons
 
-  def setHiddenNeurons(hiddenNeurons: Seq[Neuron]) = {
-    hiddenNeurons.foreach(x => this.addHiddenNeuron(x))
-    this.numberOfNeurons += hiddenNeurons.length
+  def ensureHiddenNeurons(labels: Seq[Int]) = {
+    val toAdd = labels.toSet -- hiddenNeurons.map(_.label)
+    toAdd.foreach(label => this.addHiddenNeuron(new Neuron(label)))
   }
 
   override def toString = s"NeuralNetwork($score)"

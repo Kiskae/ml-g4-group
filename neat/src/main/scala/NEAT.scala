@@ -26,14 +26,14 @@ object NEAT extends Logging {
   }
 
   def view = {
-//    val rneuralNetwork = ReadObjectFromFile[NeuralNetwork]("network-2712-1610.obj")
-        val rInput = new BallFollower(30000L / 2)
-//    val rInput = new NEATInputProvider(rneuralNetwork)
+    val rneuralNetwork = ReadObjectFromFile[NeuralNetwork]("network.obj")
+//        val rInput = new BallFollower(30000L / 2)
+    val rInput = new NEATInputProvider(rneuralNetwork)
 
     val neuralNetwork = ReadObjectFromFile[NeuralNetwork]("network.obj")
 
     val lInput = new NEATInputProvider(neuralNetwork)
-    val score = evaluate(lInput, rInput, true, neuralNetwork)
+    val score = evaluate(lInput, rInput, true)
   }
 
   def ReadObjectFromFile[A](filename: String)(implicit m: scala.reflect.Manifest[A]): A = {
@@ -46,10 +46,10 @@ object NEAT extends Logging {
   }
 
   def train = {
-//    val rneuralNetwork = ReadObjectFromFile[NeuralNetwork]("network-2712-1610.obj")
-//    val rInput = new NEATInputProvider(rneuralNetwork)
-    val rInput = new BallFollower(30000L / 2)
-    val generationCount = 30
+    //    val rneuralNetwork = ReadObjectFromFile[NeuralNetwork]("network-2712-2056.obj")
+    //    val rInput = new NEATInputProvider(rneuralNetwork)
+    val rInputBall = new BallFollower(30000L / 2)
+    val generationCount = 100
     val speciesCount = 5
     val networksPerSpecies = 100
     val inputLayerCount = 6
@@ -57,17 +57,31 @@ object NEAT extends Logging {
     val generation = NetworkCreator.generation(speciesCount, networksPerSpecies, inputLayerCount, outputLayerCount)
 
     //TODO for each NN in generation: run 1 "game" and evaluate.
-
+    var bestNetwork: NeuralNetwork = ReadObjectFromFile[NeuralNetwork]("network.obj")
 
     for (i <- 0 until generationCount) {
       generation.evolve
+
+      val rInputNetwork = new NEATInputProvider(bestNetwork)
+
       println(s"Starting generation $i/$generationCount.")
       for (neuralNetwork <- generation.networks) {
         val lInput = new NEATInputProvider(neuralNetwork)
-        val score = evaluate(lInput, rInput, false, neuralNetwork)
+        var score = 0.0
+
+        if(i < 30){
+          score = evaluate(lInput, rInputBall, false)
+        }else{
+          score = evaluate(lInput, rInputNetwork, false)
+//          score = evaluate(rInputBall, rInputNetwork, true)
+        }
+
         neuralNetwork.score = score
 //        if (score > 0) logger.info(s"Killed prototype. score = $score")
       }
+
+      bestNetwork = generation.networks.sortBy(x => x.score).last
+      println("bestNetwork: " + bestNetwork)
 
       val bestPrototypes = generation.getBestPrototypes
       println("Best prototypes: " + bestPrototypes)
@@ -77,7 +91,7 @@ object NEAT extends Logging {
     }
 
     //store best network
-    val bestNetwork = generation.networks.sortBy(x => x.score).last
+    bestNetwork = generation.networks.sortBy(x => x.score).last
 
     println("Best network.neurons.length: " + bestNetwork.neurons.length)
     val oos = new ObjectOutputStream(new FileOutputStream("network.obj"))
@@ -86,7 +100,7 @@ object NEAT extends Logging {
 
   }
 
-  def evaluate(lInput: PlayerInputProvider, rInput: PlayerInputProvider, showUI: Boolean, network: NeuralNetwork) = {
+  def evaluate(lInput: PlayerInputProvider, rInput: PlayerInputProvider, showUI: Boolean) = {
     val gameProps = new GameProperties()
     val physProps = new PhysicsProperties()
     val s = new GameState(gameProps, physProps, lInput, rInput)

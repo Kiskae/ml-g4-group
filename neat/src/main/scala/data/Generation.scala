@@ -104,7 +104,7 @@ class Generation(var species: Seq[Species]) {
 
 //          if (random.nextInt(4) == 0) offspring += NetworkBreeder.breed(network1, network2)
 //          if (random.nextInt(8) == 0) offspring += NetworkBreeder.breed(network1, network2)
-          if (random.nextInt(16) == 0) offspring += NetworkBreeder.breed(network1, network2)
+//          if (random.nextInt(16) == 0) offspring += NetworkBreeder.breed(network1, network2)
         }
 
         println("")

@@ -52,6 +52,7 @@ class Generation(var species: Seq[Species]) {
 
       if(r.nextInt((1 / newNodeProbability).toInt) == 0) {
         val hiddenNeuron = n.newNeuron
+        println("new node")
         n.addHiddenNeuron(hiddenNeuron)
       }
     }

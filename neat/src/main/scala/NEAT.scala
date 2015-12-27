@@ -26,7 +26,9 @@ object NEAT extends Logging {
   }
 
   def view = {
-    val rInput = new BallFollower(30000L / 2)
+//    val rneuralNetwork = ReadObjectFromFile[NeuralNetwork]("network-2712-1610.obj")
+        val rInput = new BallFollower(30000L / 2)
+//    val rInput = new NEATInputProvider(rneuralNetwork)
 
     val neuralNetwork = ReadObjectFromFile[NeuralNetwork]("network.obj")
 
@@ -44,8 +46,10 @@ object NEAT extends Logging {
   }
 
   def train = {
+//    val rneuralNetwork = ReadObjectFromFile[NeuralNetwork]("network-2712-1610.obj")
+//    val rInput = new NEATInputProvider(rneuralNetwork)
     val rInput = new BallFollower(30000L / 2)
-    val generationCount = 20
+    val generationCount = 30
     val speciesCount = 5
     val networksPerSpecies = 100
     val inputLayerCount = 6
@@ -67,12 +71,15 @@ object NEAT extends Logging {
 
       val bestPrototypes = generation.getBestPrototypes
       println("Best prototypes: " + bestPrototypes)
-      println("Best prototypes.weights: " + bestPrototypes.map(_.getConnections))
+//      println("Best prototypes.weights: " + bestPrototypes.map(_.getConnections))
+//      println("Best prototypes(0).neurons.length: " + bestPrototypes(0).neurons.length)
       println("Best prototypes weights: " + bestPrototypes.map(_.getWeights.length))
     }
 
     //store best network
     val bestNetwork = generation.networks.sortBy(x => x.score).last
+
+    println("Best network.neurons.length: " + bestNetwork.neurons.length)
     val oos = new ObjectOutputStream(new FileOutputStream("network.obj"))
     oos.writeObject(bestNetwork)
     oos.close

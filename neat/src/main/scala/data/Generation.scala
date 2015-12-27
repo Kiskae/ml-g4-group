@@ -15,6 +15,7 @@ class Generation(var species: Seq[Species]) {
   var currentGeneration = 0
   val eliminationPercentage = 0.5
   val newConnectionProbability = 0.2
+  val newNodeProbability = 0.6
 
   def networks: Seq[NeuralNetwork] = {
     species.flatMap(_.networks)
@@ -34,12 +35,24 @@ class Generation(var species: Seq[Species]) {
 
     for(n <- networks){
       if(r.nextInt((1 / newConnectionProbability).toInt) == 0) {
-        val inputNeurons = n.getInputNeurons
-        val startNeuron = inputNeurons(r.nextInt(n.getInputsCount))
+        val inputNeurons = n.getInputNeurons ++ n.hiddenNeurons
+        var startNeuron = inputNeurons(r.nextInt(inputNeurons.length))
 
-        val outputNeurons = n.getOutputNeurons
-        val endNeuron = outputNeurons(r.nextInt(n.getOutputsCount))
+        val outputNeurons = n.getOutputNeurons ++ n.hiddenNeurons
+        var endNeuron = outputNeurons(r.nextInt(outputNeurons.length))
+
+        while(startNeuron.label >= endNeuron.label && !n.getOutputNeurons.map(_.label).contains(endNeuron.label)){
+//          println(s"hier: ${startNeuron.label} -> ${endNeuron.label}")
+          startNeuron = inputNeurons(r.nextInt(inputNeurons.length))
+          endNeuron = outputNeurons(r.nextInt(outputNeurons.length))
+        }
+
         n.createConnection(startNeuron, endNeuron, r.nextDouble() * (r.nextInt(9) - 4)) //TODO what is the range of the weights?
+      }
+
+      if(r.nextInt((1 / newNodeProbability).toInt) == 0) {
+        val hiddenNeuron = n.newNeuron
+        n.addHiddenNeuron(hiddenNeuron)
       }
     }
   }
@@ -69,7 +82,7 @@ class Generation(var species: Seq[Species]) {
         // TODO what to do if the fitness sum is zero? all prototypes are bad, kill off species?
         //TODO what about negative fitness? Will mess up the distribution
         if (fitnessSum == 0) {
-          println("Aborted because fitnesssum = 0")
+//          println("Aborted because fitnesssum = 0")
           newSpecies += specie
           break
 //          return

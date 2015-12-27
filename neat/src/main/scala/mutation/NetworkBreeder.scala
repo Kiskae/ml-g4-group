@@ -11,7 +11,7 @@ object NetworkBreeder {
   def breed(network1: NeuralNetwork, network2: NeuralNetwork): NeuralNetwork = {
     val offspring = new NeuralNetwork()
 
-    offspring.setInputNeurons(recreate(network1.getInputNeurons)) // TODO Is it OK to use references here?
+    offspring.setInputNeurons(recreate(network1.getInputNeurons))
     offspring.setOutputNeurons(recreate(network1.getOutputNeurons))
 
     val innovationNumbers = (network1.getInnovationNumbers ++ network2.getInnovationNumbers).distinct.sorted
@@ -24,16 +24,20 @@ object NetworkBreeder {
         case (Some(c1), Some(c2)) => {
           // Take the connection from the fittest parent
           if (network1.score > network2.score) {
+            offspring.setHiddenNeurons(recreate(network1.getHiddenNeurons))
             offspring.createConnection(offspring.getNeuron(c1._1.label), offspring.getNeuron(c1._2.label), c1._3)
             val x2 = 1
           }else {
+            offspring.setHiddenNeurons(recreate(network2.getHiddenNeurons))
             offspring.createConnection(offspring.getNeuron(c2._1.label), offspring.getNeuron(c2._2.label), c2._3)
           }
         }
         case (Some(c1), None) => {
+          offspring.setHiddenNeurons(recreate(network1.getHiddenNeurons))
           offspring.createConnection(offspring.getNeuron(c1._1.label), offspring.getNeuron(c1._2.label), c1._3)
         }
         case (None, Some(c2)) => {
+          offspring.setHiddenNeurons(recreate(network2.getHiddenNeurons))
           offspring.createConnection(offspring.getNeuron(c2._1.label), offspring.getNeuron(c2._2.label), c2._3)
         }
       }

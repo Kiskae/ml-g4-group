@@ -94,19 +94,24 @@ class NeuralNetwork(neuronsInCount: Int = 0, neuronsOutCount: Int = 0) extends S
 
   def setInputNeurons(inputNeurons: Seq[Neuron]) = {
     this.inputNeurons = inputNeurons.to[ArrayBuffer]
+    numberOfNeurons += inputNeurons.length
   }
 
   def getOutputNeurons: Seq[Neuron] = outputNeurons
 
   def setOutputNeurons(outputNeurons: Seq[Neuron]) = {
     this.outputNeurons = outputNeurons.to[ArrayBuffer]
+    numberOfNeurons += inputNeurons.length
   }
 
   def getWeights: Seq[Double] = connections.map(_._3)
 
   def neurons: Seq[Neuron] = hiddenNeurons ++ inputNeurons ++ outputNeurons
 
-  def addHiddenNeuron(neuron: Neuron) = hiddenNeurons += neuron
+  def addHiddenNeuron(neuron: Neuron) = {
+    hiddenNeurons += neuron
+    numberOfNeurons += 1
+  }
 
   def getInnovationNumbers: Seq[Int] = {
     connections.map(_._4)
@@ -121,6 +126,8 @@ class NeuralNetwork(neuronsInCount: Int = 0, neuronsOutCount: Int = 0) extends S
       None
     }
   }
+
+  def getConnections = connections
 
   override def toString = s"NeuralNetwork($score)"
 }

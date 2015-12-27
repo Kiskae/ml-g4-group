@@ -67,6 +67,7 @@ object NEAT extends Logging {
 
       val bestPrototypes = generation.getBestPrototypes
       println("Best prototypes: " + bestPrototypes)
+      println("Best prototypes.weights: " + bestPrototypes.map(_.getConnections))
       println("Best prototypes weights: " + bestPrototypes.map(_.getWeights.length))
     }
 

@@ -62,7 +62,7 @@ object NEAT extends Logging {
         val lInput = new NEATInputProvider(neuralNetwork)
         val score = evaluate(lInput, rInput, false, neuralNetwork)
         neuralNetwork.score = score
-        if (score > 0) logger.info(s"Killed prototype. score = $score")
+//        if (score > 0) logger.info(s"Killed prototype. score = $score")
       }
 
       val bestPrototypes = generation.getBestPrototypes

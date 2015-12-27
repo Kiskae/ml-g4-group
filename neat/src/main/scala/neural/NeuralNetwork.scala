@@ -53,10 +53,12 @@ class NeuralNetwork(neuronsInCount: Int = 0, neuronsOutCount: Int = 0) extends S
   def createConnection(startNeuron: Neuron, endNeuron: Neuron, weight: Double) = {
     if(!inputNeurons.map(_.label).contains(startNeuron.label) && !hiddenNeurons.map(_.label).contains(startNeuron.label)){
       hiddenNeurons += startNeuron
+      numberOfNeurons += 1
     }
 
     if(!outputNeurons.map(_.label).contains(endNeuron.label) && !hiddenNeurons.map(_.label).contains(endNeuron.label)){
       hiddenNeurons += endNeuron
+      numberOfNeurons += 1
     }
 
     val innovationNumber = InnovationPool.getInnovationNumber((startNeuron, endNeuron))
@@ -128,6 +130,10 @@ class NeuralNetwork(neuronsInCount: Int = 0, neuronsOutCount: Int = 0) extends S
   }
 
   def getConnections = connections
+
+  def getNeuron(label: Int): Neuron = {
+    neurons(neurons.map(_.label).indexOf(label))
+  }
 
   override def toString = s"NeuralNetwork($score)"
 }

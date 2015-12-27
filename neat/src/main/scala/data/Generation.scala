@@ -13,9 +13,10 @@ import scala.util.control.Breaks._
   */
 class Generation(var species: Seq[Species]) {
   var currentGeneration = 0
-  val eliminationPercentage = 0.5
-  val newConnectionProbability = 0.2
+  val eliminationPercentage = 0.3
+  val newConnectionProbability = 0.1
   val newNodeProbability = 0.1
+  val deleteConnectionProbability = 0.05
 
   def networks: Seq[NeuralNetwork] = {
     species.flatMap(_.networks)
@@ -53,6 +54,10 @@ class Generation(var species: Seq[Species]) {
       if(r.nextInt((1 / newNodeProbability).toInt) == 0) {
         val hiddenNeuron = n.newNeuron
         n.addHiddenNeuron(hiddenNeuron)
+      }
+
+      if(r.nextInt((1 / deleteConnectionProbability).toInt) == 0) {
+        n.deleteRandomConnection
       }
     }
   }

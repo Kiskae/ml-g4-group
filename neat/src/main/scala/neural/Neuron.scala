@@ -44,6 +44,10 @@ class Neuron(val label: Int) extends Serializable{
     inputNeurons.map(_._1.label)
   }
 
+  def removeInputNeuron(label: Int) = {
+    val index = getInputLabels.indexOf(label)
+    inputNeurons.remove(index)
+  }
 
   override def toString = s"Neuron($label)"
 }

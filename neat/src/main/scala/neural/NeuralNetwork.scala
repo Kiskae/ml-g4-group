@@ -3,6 +3,7 @@ package neural
 import data.InnovationPool
 
 import scala.collection.mutable.ArrayBuffer
+import scala.util.Random
 
 /**
   * Created by bas on 21-12-15.
@@ -146,6 +147,18 @@ class NeuralNetwork(neuronsInCount: Int = 0, neuronsOutCount: Int = 0) extends S
   def ensureHiddenNeurons(labels: Seq[Int]) = {
     val toAdd = labels.toSet -- hiddenNeurons.map(_.label)
     toAdd.foreach(label => this.addHiddenNeuron(new Neuron(label)))
+  }
+
+  def deleteRandomConnection: Any = {
+    val r = new Random
+
+    if(connections.length == 0) return
+
+    val index = r.nextInt(connections.length)
+    val connection = connections(index)
+
+    connection._2.removeInputNeuron(connection._1.label)
+
   }
 
   override def toString = s"NeuralNetwork($score)"

@@ -13,7 +13,7 @@ import ui.SwingUI
   */
 object NEAT extends Logging {
 
-  val maxIdleSteps = 500
+  val maxIdleSteps = 2000
   val cutOffScore = 10
 
   def main(args: Array[String]) = {
@@ -49,7 +49,7 @@ object NEAT extends Logging {
     //    val rneuralNetwork = ReadObjectFromFile[NeuralNetwork]("network-2712-2056.obj")
     //    val rInput = new NEATInputProvider(rneuralNetwork)
     val rInputBall = new BallFollower(30000L / 2)
-    val generationCount = 100
+    val generationCount = 50
     val speciesCount = 5
     val networksPerSpecies = 100
     val inputLayerCount = 6

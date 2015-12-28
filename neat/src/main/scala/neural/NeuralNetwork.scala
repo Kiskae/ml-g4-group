@@ -70,6 +70,16 @@ class NeuralNetwork(neuronsInCount: Int = 0, neuronsOutCount: Int = 0) extends S
     }
   }
 
+  def assertConsistent = {
+
+    for(x <- connections){
+      if(!x._2.inputNeurons.map(_._1.label).contains(x._1.label)) {
+        println(connections.length)
+        throw new Exception
+      }
+    }
+  }
+
   def setInput(inputs: Double*) = {
     if (inputs.length != inputNeurons.length) {
       throw new IllegalArgumentException("Size of input values doesn't match size of input neurons.")
@@ -158,7 +168,7 @@ class NeuralNetwork(neuronsInCount: Int = 0, neuronsOutCount: Int = 0) extends S
     val connection = connections(index)
 
     connection._2.removeInputNeuron(connection._1.label)
-
+    connections.remove(index)
   }
 
   override def toString = s"NeuralNetwork($score)"

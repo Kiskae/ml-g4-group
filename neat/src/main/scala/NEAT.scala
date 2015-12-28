@@ -46,10 +46,10 @@ object NEAT extends Logging {
   }
 
   def train = {
-    //    val rneuralNetwork = ReadObjectFromFile[NeuralNetwork]("network-2712-2056.obj")
-    //    val rInput = new NEATInputProvider(rneuralNetwork)
+//        val rneuralNetwork = ReadObjectFromFile[NeuralNetwork]("network-2712-2056.obj")
+//        val rInput = new NEATInputProvider(rneuralNetwork)
     val rInputBall = new BallFollower(30000L / 2)
-    val generationCount = 50
+    val generationCount = 20
     val speciesCount = 5
     val networksPerSpecies = 100
     val inputLayerCount = 6
@@ -57,12 +57,12 @@ object NEAT extends Logging {
     val generation = NetworkCreator.generation(speciesCount, networksPerSpecies, inputLayerCount, outputLayerCount)
 
     //TODO for each NN in generation: run 1 "game" and evaluate.
-    var bestNetwork: NeuralNetwork = ReadObjectFromFile[NeuralNetwork]("network.obj")
+//    var bestNetwork: NeuralNetwork = ReadObjectFromFile[NeuralNetwork]("network.obj")
 
     for (i <- 0 until generationCount) {
       generation.evolve
 
-      val rInputNetwork = new NEATInputProvider(bestNetwork)
+//      val rInputNetwork = new NEATInputProvider(bestNetwork)
 
       println(s"Starting generation $i/$generationCount.")
       for (neuralNetwork <- generation.networks) {
@@ -72,15 +72,15 @@ object NEAT extends Logging {
         if(i < 30){
           score = evaluate(lInput, rInputBall, false)
         }else{
-          score = evaluate(lInput, rInputNetwork, false)
-//          score = evaluate(rInputBall, rInputNetwork, true)
+//          score = evaluate(lInput, rInputNetwork, false)
+          score = evaluate(rInputBall, rInputBall, true)
         }
 
         neuralNetwork.score = score
 //        if (score > 0) logger.info(s"Killed prototype. score = $score")
       }
 
-      bestNetwork = generation.networks.sortBy(x => x.score).last
+      val bestNetwork = generation.networks.sortBy(x => x.score).last
       println("bestNetwork: " + bestNetwork)
 
       val bestPrototypes = generation.getBestPrototypes
@@ -91,7 +91,7 @@ object NEAT extends Logging {
     }
 
     //store best network
-    bestNetwork = generation.networks.sortBy(x => x.score).last
+    val bestNetwork = generation.networks.sortBy(x => x.score).last
 
     println("Best network.neurons.length: " + bestNetwork.neurons.length)
     val oos = new ObjectOutputStream(new FileOutputStream("network.obj"))

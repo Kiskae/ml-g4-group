@@ -27,7 +27,6 @@ object NetworkBreeder {
           // Take the connection from the fittest parent
           if (network1.score > network2.score) {
             offspring.createConnection(offspring.getNeuron(c1._1.label), offspring.getNeuron(c1._2.label), c1._3)
-            val x2 = 1
           }else {
             offspring.createConnection(offspring.getNeuron(c2._1.label), offspring.getNeuron(c2._2.label), c2._3)
           }

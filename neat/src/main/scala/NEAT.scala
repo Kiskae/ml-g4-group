@@ -49,10 +49,6 @@ object NEAT extends Logging {
       val rInputNetwork = new NEATInputProvider(bestNetwork)
 
       println(s"Starting generation $i/$generationCount.")
-//      for (neuralNetwork <- generation.networks) {
-//        val lInput = new NEATInputProvider(neuralNetwork)
-//        neuralNetwork.score = evaluate(lInput, rInputNetwork, false)
-//      }
 
       generation.networks.par.foreach( neuralNetwork => {
         val lInput = new NEATInputProvider(neuralNetwork)

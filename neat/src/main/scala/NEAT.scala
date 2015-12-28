@@ -13,85 +13,65 @@ import ui.SwingUI
   */
 object NEAT extends Logging {
 
-  val maxIdleSteps = 2000
-  val cutOffScore = 10
+  val maxIdleSteps = 3000
+  val cutOffScore = 5
 
   def main(args: Array[String]) = {
     logger.info("Starting NEAT!")
-    //    val lInput = new BallFollower(30000L / 2)
 
     train
     view
-
   }
 
   def view = {
     val rneuralNetwork = ReadObjectFromFile[NeuralNetwork]("network.obj")
 //        val rInput = new BallFollower(30000L / 2)
     val rInput = new NEATInputProvider(rneuralNetwork)
-
     val neuralNetwork = ReadObjectFromFile[NeuralNetwork]("network.obj")
 
     val lInput = new NEATInputProvider(neuralNetwork)
     val score = evaluate(lInput, rInput, true)
   }
 
-  def ReadObjectFromFile[A](filename: String)(implicit m: scala.reflect.Manifest[A]): A = {
-    val input = new ObjectInputStream(new FileInputStream(filename))
-    val obj = input.readObject()
-    obj match {
-      case x if m.runtimeClass.isInstance(x) => x.asInstanceOf[A]
-      case _ => sys.error("Type not what was expected when reading from file")
-    }
-  }
-
   def train = {
-//        val rneuralNetwork = ReadObjectFromFile[NeuralNetwork]("network-2712-2056.obj")
-//        val rInput = new NEATInputProvider(rneuralNetwork)
     val rInputBall = new BallFollower(30000L / 2)
-    val generationCount = 20
+    val generationCount = 50
     val speciesCount = 5
     val networksPerSpecies = 100
     val inputLayerCount = 6
     val outputLayerCount = 3
     val generation = NetworkCreator.generation(speciesCount, networksPerSpecies, inputLayerCount, outputLayerCount)
-
-    //TODO for each NN in generation: run 1 "game" and evaluate.
-//    var bestNetwork: NeuralNetwork = ReadObjectFromFile[NeuralNetwork]("network.obj")
+    var bestNetwork: NeuralNetwork = ReadObjectFromFile[NeuralNetwork]("network.obj")
 
     for (i <- 0 until generationCount) {
       generation.evolve
 
-//      val rInputNetwork = new NEATInputProvider(bestNetwork)
+      val rInputNetwork = new NEATInputProvider(bestNetwork)
 
       println(s"Starting generation $i/$generationCount.")
       for (neuralNetwork <- generation.networks) {
         val lInput = new NEATInputProvider(neuralNetwork)
         var score = 0.0
 
-        if(i < 30){
-          score = evaluate(lInput, rInputBall, false)
-        }else{
-//          score = evaluate(lInput, rInputNetwork, false)
-          score = evaluate(rInputBall, rInputBall, true)
-        }
+//        if(i < 30){
+//          score = evaluate(lInput, rInputBall, false)
+//        }else{
+          score = evaluate(lInput, rInputNetwork, false)
+//        }
 
         neuralNetwork.score = score
-//        if (score > 0) logger.info(s"Killed prototype. score = $score")
       }
 
-      val bestNetwork = generation.networks.sortBy(x => x.score).last
-      println("bestNetwork: " + bestNetwork)
-
+      // Update the best network
+      bestNetwork = generation.networks.sortBy(x => x.score).last
       val bestPrototypes = generation.getBestPrototypes
       println("Best prototypes: " + bestPrototypes)
-//      println("Best prototypes.weights: " + bestPrototypes.map(_.getConnections))
-//      println("Best prototypes(0).neurons.length: " + bestPrototypes(0).neurons.length)
-      println("Best prototypes weights: " + bestPrototypes.map(_.getWeights.length))
+      println("Best prototypes.weights.length: " + bestPrototypes.map(_.getWeights.length))
+      println("Best prototypes.neurons.length: " + bestPrototypes.map(_.neurons.length))
     }
 
     //store best network
-    val bestNetwork = generation.networks.sortBy(x => x.score).last
+    bestNetwork = generation.networks.sortBy(x => x.score).last
 
     println("Best network.neurons.length: " + bestNetwork.neurons.length)
     val oos = new ObjectOutputStream(new FileOutputStream("network.obj"))
@@ -144,7 +124,6 @@ object NEAT extends Logging {
             val sleepTimeMs = tmp / NS_PER_SEC
             val frac = (NS_PER_SEC / MS_PER_SEC)
             val sleepTimeNs = (sleepTime % frac).toInt
-            //System.err.printf("Sleeping for %dms + %dns\n",sleepTimeMs,sleepTimeNs);
             Thread.sleep(sleepTimeMs, sleepTimeNs)
           } catch {
             case ex: InterruptedException => {
@@ -165,8 +144,17 @@ object NEAT extends Logging {
     }
 
     ui.dispose()
-//    latestScore - s.getOpponentScore
-    if(latestScore != s.getMyScore) sys.error("shouldnt happen")
-    (latestScore - s.getOpponentScore)/ stepCounter.toFloat * 1000
+
+    (latestScore - s.getOpponentScore) / stepCounter.toFloat * 1000
+  }
+
+
+  def ReadObjectFromFile[A](filename: String)(implicit m: scala.reflect.Manifest[A]): A = {
+    val input = new ObjectInputStream(new FileInputStream(filename))
+    val obj = input.readObject()
+    obj match {
+      case x if m.runtimeClass.isInstance(x) => x.asInstanceOf[A]
+      case _ => sys.error("Type not what was expected when reading from file")
+    }
   }
 }

@@ -24,7 +24,6 @@ class Generation(var species: Seq[Species]) {
 
   def evolve() = {
 
-
     mutate
     breed
 
@@ -43,7 +42,6 @@ class Generation(var species: Seq[Species]) {
         var endNeuron = outputNeurons(r.nextInt(outputNeurons.length))
 
         while(startNeuron.label >= endNeuron.label && !n.getOutputNeurons.map(_.label).contains(endNeuron.label)){
-//          println(s"hier: ${startNeuron.label} -> ${endNeuron.label}")
           startNeuron = inputNeurons(r.nextInt(inputNeurons.length))
           endNeuron = outputNeurons(r.nextInt(outputNeurons.length))
         }
@@ -64,7 +62,7 @@ class Generation(var species: Seq[Species]) {
 
   def breed(): Any = {
     var newSpecies = new ArrayBuffer[Species]
-    println("Pre species 0 length: " + species.head.networks.length)
+
     for(specie <- species) {
       breakable {
         //For each specie: murder the bottom N percent, replace population
@@ -84,13 +82,9 @@ class Generation(var species: Seq[Species]) {
         networks.foreach(x => x.score = x.score + Math.abs(fitnessMin))
         val fitnessSum = networks.map(_.score) sum
 
-        // TODO what to do if the fitness sum is zero? all prototypes are bad, kill off species?
-        //TODO what about negative fitness? Will mess up the distribution
         if (fitnessSum == 0) {
-//          println("Aborted because fitnesssum = 0")
           newSpecies += specie
           break
-//          return
         }
 
         for (network <- networks) {
@@ -106,20 +100,13 @@ class Generation(var species: Seq[Species]) {
 
           //TODO Should we make sure they're not the same network?
           offspring += NetworkBreeder.breed(network1, network2)
-
-//          if (random.nextInt(4) == 0) offspring += NetworkBreeder.breed(network1, network2)
-//          if (random.nextInt(8) == 0) offspring += NetworkBreeder.breed(network1, network2)
-//          if (random.nextInt(16) == 0) offspring += NetworkBreeder.breed(network1, network2)
         }
 
-        println("")
         newSpecies += new Species(offspring)
       }
     }
 
     if(newSpecies.length > 0) species = newSpecies
-
-    println("Post species 0 length: " + species.head.networks.length)
   }
 
   // Adapted from http://stackoverflow.com/a/24869852/1357218

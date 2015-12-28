@@ -1,5 +1,7 @@
 package data
 
+import java.io.{FileOutputStream, ObjectOutputStream}
+
 import mutation.NetworkBreeder
 import neural.NeuralNetwork
 
@@ -8,10 +10,7 @@ import scala.collection.mutable.ArrayBuffer
 import scala.util.Random
 import scala.util.control.Breaks._
 
-/**
-  * Created by bas on 6-12-15.
-  */
-class Generation(var species: Seq[Species]) {
+class Generation(var species: Seq[Species]) extends Serializable {
   var currentGeneration = 0
   val eliminationPercentage = 0.3
   val newConnectionProbability = 0.1
@@ -125,5 +124,11 @@ class Generation(var species: Seq[Species]) {
 
   def getBestPrototypes: Seq[NeuralNetwork] = {
     species.map(_.getBestNetwork)
+  }
+
+  def storeToFile(filename: String) = {
+    val oos = new ObjectOutputStream(new FileOutputStream(filename))
+    oos.writeObject(this)
+    oos.close
   }
 }

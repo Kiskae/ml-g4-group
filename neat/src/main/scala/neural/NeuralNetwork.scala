@@ -5,9 +5,6 @@ import data.InnovationPool
 import scala.collection.mutable.ArrayBuffer
 import scala.util.Random
 
-/**
-  * Created by bas on 21-12-15.
-  */
 class NeuralNetwork(neuronsInCount: Int = 0, neuronsOutCount: Int = 0) extends Serializable {
   var numberOfNeurons = 0
   var hiddenNeurons = new ArrayBuffer[Neuron]

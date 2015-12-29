@@ -23,14 +23,14 @@ class NeuralNetworkSpec extends FlatSpec with Matchers {
     val n = fixture.network
     n.setInput(1, 0, 1)
     n.evaluate
-    assert(NeuralNetworkUtil.threshold(n.getOutput.head) == 0)
+    assert(n.thresholdOutput.head == 0)
   }
 
   it should "evaluate to 1 if everything is 1" in {
     val n = fixture.network
     n.setInput(1, 1, 1)
     n.evaluate
-    assert(NeuralNetworkUtil.threshold(n.getOutput.head) == 1)
+    assert(n.thresholdOutput.head == 1)
   }
 
   it should "do something, What is the expected outcome bas?" in {

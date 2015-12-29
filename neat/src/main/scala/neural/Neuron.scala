@@ -1,53 +1,60 @@
 package neural
 
-import scala.collection.mutable.ArrayBuffer
-
 /**
   * Created by bas on 21-12-15.
   */
-class Neuron(val label: Int) extends Serializable{
-  var inputNeurons = new ArrayBuffer[(Neuron, Double, Int)]
+class Neuron(val label: Int) extends Serializable {
+  private var inputNeurons: Seq[InputNeuron] = Seq()
   /** value is used for the input values. */
-  var value = 0.0
-  var valueIsSet = false
+  var value: Option[Double] = None
 
   /**
     * Return the value if set, otherwise evaluate this
     * Neuron with the input neurons.
     */
   def evaluate: Double = {
-    if(valueIsSet){
-      value
-    }else{
-      val as = inputNeurons.map(_._1.evaluate)
-      val bs = inputNeurons.map(_._2)
-      (for ((a, b) <- as zip bs) yield a * b) sum
+    value.getOrElse {
+      inputNeurons.map(n => n.other.evaluate * n.weight).sum
     }
   }
 
   def addInputNeuron(inputNeuron: Neuron, weight: Double, innovationNumber: Int) = {
-    inputNeurons += Tuple3(inputNeuron, weight, innovationNumber)
+    inputNeurons = inputNeurons :+ InputNeuron(inputNeuron, weight, innovationNumber)
   }
 
-  def getWeights: Seq[Double] = inputNeurons.map(_._2)
+  def getWeights: Seq[Double] = inputNeurons.map(_.weight)
 
   def setValue(value: Double) = {
-    this.value = value
-    this.valueIsSet = true
+    this.value = Some(value)
   }
 
   def getInputNeurons: Seq[Neuron] = {
-    inputNeurons.map(_._1)
+    inputNeurons.map(_.other)
   }
 
   def getInputLabels: Seq[Int] = {
-    inputNeurons.map(_._1.label)
+    getInputNeurons.map(_.label)
   }
 
   def removeInputNeuron(label: Int) = {
-    val index = getInputLabels.indexOf(label)
-    inputNeurons.remove(index)
+    inputNeurons = inputNeurons.filterNot(_.other.label == label)
   }
 
-  override def toString = s"Neuron($label)"
+  override def toString = s"Neuron($label,in=$getInputLabels)"
+
+  private case class InputNeuron(other: Neuron, weight: Double, innovation: Int)
+
+  def canEqual(other: Any): Boolean = other.isInstanceOf[Neuron]
+
+  override def equals(other: Any): Boolean = other match {
+    // Not really full implementation of equals, but good enough
+    case that: Neuron =>
+      (that canEqual this) &&
+        label == that.label
+    case _ => false
+  }
+
+  override def hashCode(): Int = {
+    label.hashCode()
+  }
 }

@@ -8,34 +8,17 @@ import scala.util.Random
 class NeuralNetwork(neuronsInCount: Int = 0, neuronsOutCount: Int = 0) extends Serializable {
   var numberOfNeurons = 0
   var hiddenNeurons = new ArrayBuffer[Neuron]
-  var inputNeurons = makeInputNeurons(neuronsInCount)
-  var outputNeurons = makeOutputNeurons(neuronsOutCount, neuronsInCount)
-  private var connections = new ArrayBuffer[(Neuron, Neuron, Double, Int)]
-  var output: Seq[Double] = null
+  private var inputNeurons = neuronSeq(neuronsInCount)
+  private var outputNeurons = neuronSeq(neuronsOutCount, neuronsInCount)
+  private var connections: IndexedSeq[NeuralNetwork.Connection] = IndexedSeq()
+  private var output: Option[Seq[Double]] = None
   var score = 0.0
 
   def newNeuron: Neuron = new Neuron(getNextLabelAndIncrement)
 
-  def makeInputNeurons(neuronsInCount: Int): Seq[Neuron] = {
-    var inputNeurons = new ArrayBuffer[Neuron]
-
-    for(i <- 0 until neuronsInCount){
-      inputNeurons += new Neuron(i)
-      numberOfNeurons += 1
-    }
-
-    inputNeurons
-  }
-
-  def makeOutputNeurons(neuronsOutCount: Int, neuronsInCount: Int): Seq[Neuron] = {
-    var outputNeurons = new ArrayBuffer[Neuron]
-
-    for(i <- 0 until neuronsOutCount){
-      outputNeurons += new Neuron(i + neuronsInCount)
-      numberOfNeurons += 1
-    }
-
-    outputNeurons
+  private def neuronSeq(length: Int, offset: Int = 0): Seq[Neuron] = {
+    numberOfNeurons = Math.max(numberOfNeurons, length + offset)
+    (0 until length).map(i => new Neuron(i + offset)).toSeq
   }
 
   private def getNextLabelAndIncrement = {
@@ -49,30 +32,26 @@ class NeuralNetwork(neuronsInCount: Int = 0, neuronsOutCount: Int = 0) extends S
     * Assumes that the input and output neurons exist.
     */
   def createConnection(startNeuron: Neuron, endNeuron: Neuron, weight: Double) = {
-    if(!inputNeurons.map(_.label).contains(startNeuron.label) && !hiddenNeurons.map(_.label).contains(startNeuron.label)){
-      hiddenNeurons += startNeuron
-      numberOfNeurons += 1
+    if (!(inputNeurons.contains(startNeuron) || hiddenNeurons.contains(startNeuron))) {
+      addHiddenNeuron(startNeuron)
     }
 
-    if(!outputNeurons.map(_.label).contains(endNeuron.label) && !hiddenNeurons.map(_.label).contains(endNeuron.label)){
-      hiddenNeurons += endNeuron
-      numberOfNeurons += 1
+    if (!(outputNeurons.contains(endNeuron) || hiddenNeurons.contains(endNeuron))) {
+      addHiddenNeuron(endNeuron)
     }
 
-    val innovationNumber = InnovationPool.getInnovationNumber((startNeuron, endNeuron))
+    val innovationNumber = InnovationPool.getInnovationNumber(startNeuron, endNeuron)
 
-    if(!endNeuron.getInputLabels.contains(startNeuron.label)){
+    if (!endNeuron.getInputNeurons.contains(startNeuron)) {
       endNeuron.addInputNeuron(startNeuron, weight, innovationNumber)
-      connections += Tuple4(startNeuron, endNeuron, weight, innovationNumber)
+      connections = connections :+ NeuralNetwork.Connection(startNeuron, endNeuron, weight, innovationNumber)
     }
   }
 
   def assertConsistent = {
-
-    for(x <- connections){
-      if(!x._2.inputNeurons.map(_._1.label).contains(x._1.label)) {
-        println(connections.length)
-        throw new Exception
+    connections.foreach { conn =>
+      if (!conn.end.getInputNeurons.contains(conn.start)) {
+        throw new IllegalStateException(s"Missing connection: $conn")
       }
     }
   }
@@ -86,15 +65,15 @@ class NeuralNetwork(neuronsInCount: Int = 0, neuronsOutCount: Int = 0) extends S
   }
 
   def evaluate: Seq[Double] = {
-    var outputs = new ArrayBuffer[Double]
-
-    outputNeurons.foreach(n => outputs += n.evaluate)
-
-    output = outputs
-    outputs
+    output = Some(outputNeurons.map(_.evaluate))
+    output.get
   }
 
-  def getOutput: Seq[Double] = output
+  def thresholdOutput: Seq[Int] = {
+    getOutput.map(out => if (out < 0) 0 else 1)
+  }
+
+  def getOutput: Seq[Double] = output.get
 
   def getInputsCount: Int = inputNeurons.length
 
@@ -103,18 +82,16 @@ class NeuralNetwork(neuronsInCount: Int = 0, neuronsOutCount: Int = 0) extends S
   def getInputNeurons: Seq[Neuron] = inputNeurons
 
   def setInputNeurons(inputNeurons: Seq[Neuron]) = {
-    this.inputNeurons = inputNeurons.to[ArrayBuffer]
-    numberOfNeurons += inputNeurons.length
+    this.inputNeurons = inputNeurons
   }
 
   def getOutputNeurons: Seq[Neuron] = outputNeurons
 
   def setOutputNeurons(outputNeurons: Seq[Neuron]) = {
-    this.outputNeurons = outputNeurons.to[ArrayBuffer]
-    numberOfNeurons += outputNeurons.length
+    this.outputNeurons = outputNeurons
   }
 
-  def getWeights: Seq[Double] = connections.map(_._3)
+  def getWeights: Seq[Double] = connections.map(_.weight)
 
   def neurons: Seq[Neuron] = hiddenNeurons ++ inputNeurons ++ outputNeurons
 
@@ -123,30 +100,17 @@ class NeuralNetwork(neuronsInCount: Int = 0, neuronsOutCount: Int = 0) extends S
   }
 
   def getInnovationNumbers: Seq[Int] = {
-    connections.map(_._4)
+    connections.map(_.innovation)
   }
 
-  def getConnectionByNumber(innovationNumber: Int): Option[(Neuron, Neuron, Double, Int)] = {
-    val innovationNumbers = getInnovationNumbers
-
-    if(innovationNumbers.contains(innovationNumber)){
-      Some(connections(innovationNumbers.indexOf(innovationNumber)))
-    }else{
-      None
-    }
+  def getConnectionByNumber(innovationNumber: Int): Option[NeuralNetwork.Connection] = {
+    connections.find(_.innovation == innovationNumber)
   }
 
   def getConnections = connections
 
   def getNeuron(label: Int): Neuron = {
-    try{
-      neurons(neurons.map(_.label).indexOf(label))
-    }catch{
-      case ex: ArrayIndexOutOfBoundsException => {
-        println("out o fobuntdsa")
-        throw ex
-      }
-    }
+    neurons.find(_.label == label).get
   }
 
   def getHiddenNeurons: Seq[Neuron] = hiddenNeurons
@@ -156,21 +120,21 @@ class NeuralNetwork(neuronsInCount: Int = 0, neuronsOutCount: Int = 0) extends S
     toAdd.foreach(label => this.addHiddenNeuron(new Neuron(label)))
   }
 
-  def deleteRandomConnection: Any = {
-    val r = new Random
+  def deleteRandomConnection(rand: Random): Any = {
+    if (connections.isEmpty) return
 
-    if(connections.length == 0) return
-
-    val index = r.nextInt(connections.length)
+    val index = rand.nextInt(connections.length)
     val connection = connections(index)
 
-    connection._2.removeInputNeuron(connection._1.label)
-    connections.remove(index)
+    connection.end.removeInputNeuron(connection.start.label)
+    connections = connections.filterNot(_ == connections)
   }
 
   override def toString = s"NeuralNetwork($score)"
 }
 
-object NeuralNetworkUtil {
-  def threshold(value: Double): Int = if (value < 0) 0 else 1
+object NeuralNetwork {
+
+  case class Connection(start: Neuron, end: Neuron, weight: Double, innovation: Int)
+
 }

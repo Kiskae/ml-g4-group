@@ -175,3 +175,6 @@ Temporary Items
 # Avoid ignoring Gradle wrapper jar file (.jar files are usually ignored)
 !gradle-wrapper.jar
 
+
+### Don't commit stored data
+/storage/

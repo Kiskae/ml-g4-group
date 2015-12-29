@@ -1,86 +1,97 @@
-import java.io.{FileOutputStream, ObjectOutputStream}
-import java.time.LocalDateTime
 import java.util.concurrent.TimeUnit
 
 import agent.{BallFollower, PlayerInputProvider}
 import data.Generation
 import grizzled.slf4j.Logging
-import misc.{Loan, Persistent}
+import misc.Persistent
 import mutation.NetworkCreator
 import neural.NeuralNetwork
 import server.{GameProperties, GameState, PhysicsProperties}
 import ui.SwingUI
 
 object NEAT extends Logging {
-
   val maxIdleSteps = 3000
   val cutOffScore = 5
 
-  def main(args: Array[String]) = {
+  def main(args: Array[String]): Unit = {
     logger.info("Starting NEAT!")
 
-    val generation = Persistent.ReadObjectFromFile[Generation]("Generation-2015-12-28T20:57:21.obj")
-    val bestNetwork: NeuralNetwork = Persistent.ReadObjectFromFile[NeuralNetwork]("network.obj")
+    val networkName = train(None, new BallFollower(30000L / 2))
+    //train(
+    // Some(Persistent.ReadObjectFromFile[Generation]("Generation-2015-12-28T20:57:21.obj"),
+    // new NEATInputProvider(Persistent.ReadObjectFromFile[NeuralNetwork]("network.obj")),
+    // updateOpponentWithBestNetwork = true
+    //)
 
-    train(Some(generation), bestNetwork)
-    view
+    logger.info(s"New network: $networkName, viewing")
+    view(networkName)
+    //view("Best-Network-2015-12-28T20:57:21.obj", Some("Best-Network-2015-12-28T20:57:21.obj"))
   }
 
-  def view = {
-    val rneuralNetwork = Persistent.ReadObjectFromFile[NeuralNetwork]("Best-Network-2015-12-28T20:57:21.obj")
-    val rInput = new BallFollower(30000L / 2)
-    //    val rInput = new NEATInputProvider(rneuralNetwork)
-    val neuralNetwork = Persistent.ReadObjectFromFile[NeuralNetwork]("Best-Network-2015-12-28T20:57:21.obj")
+  def view(leftNetwork: String, rightNetwork: Option[String] = None) = {
+    val lInput = new NEATInputProvider(Persistent.ReadObjectFromFile[NeuralNetwork](leftNetwork))
+    val rInput = rightNetwork
+      .map(file => new NEATInputProvider(Persistent.ReadObjectFromFile[NeuralNetwork](file)))
+      .getOrElse(new BallFollower(30000L / 2))
 
-    val lInput = new NEATInputProvider(neuralNetwork)
-    val score = evaluate(lInput, rInput, true)
+    evaluate(lInput, rInput, showUI = true)
   }
 
-  def train(initialGeneration: Option[Generation], initialTrainingNetwork: NeuralNetwork) = {
-    val rInputBall = new BallFollower(30000L / 2)
+  def train(initialGeneration: Option[Generation],
+            initialOpponent: PlayerInputProvider,
+            updateOpponentWithBestNetwork: Boolean = false): String = {
     val generationCount = 10
     val speciesCount = 5
     val networksPerSpecies = 100
     val inputLayerCount = 6
     val outputLayerCount = 3
 
-    val generation = initialGeneration match {
-      case Some(generation) => generation
-      case None => NetworkCreator.generation(speciesCount, networksPerSpecies, inputLayerCount, outputLayerCount)
-    }
+    val generation = initialGeneration.getOrElse(NetworkCreator.generation(
+      speciesCount,
+      networksPerSpecies,
+      inputLayerCount,
+      outputLayerCount
+    ))
 
-    var trainingNetwork = initialTrainingNetwork
+    var opponent = initialOpponent
     for (i <- 0 until generationCount) {
-      generation.evolve
+      generation.evolve()
 
-      val rInputNetwork = new NEATInputProvider(trainingNetwork)
-
-      println(s"Starting generation $i/$generationCount.")
+      logger.info(s"Starting generation $i/$generationCount.")
 
       generation.networks.par.foreach(neuralNetwork => {
         val lInput = new NEATInputProvider(neuralNetwork)
-        neuralNetwork.score = evaluate(lInput, rInputNetwork, false)
+        neuralNetwork.score = evaluate(lInput, opponent, showUI = false)
       })
 
-      // Update the best network.
-      trainingNetwork = generation.networks.sortBy(x => x.score).last
       val bestPrototypes = generation.getBestPrototypes
-      println("Best prototypes: " + bestPrototypes)
-      println("Best prototypes.weights.length: " + bestPrototypes.map(_.getWeights.length))
-      println("Best prototypes.neurons.length: " + bestPrototypes.map(_.neurons.length))
+      logger.info("Best prototypes: " + bestPrototypes)
+      logger.info("Best prototypes.weights.length: " + bestPrototypes.map(_.getWeights.length))
+      logger.info("Best prototypes.neurons.length: " + bestPrototypes.map(_.neurons.length))
+
+      // Update the best network.
+      if (updateOpponentWithBestNetwork) {
+        opponent = new NEATInputProvider(generation.networks.sortBy(x => x.score).last)
+      }
     }
 
     // Store best network.
-    trainingNetwork = generation.networks.sortBy(x => x.score).last
+    val bestNetwork = generation.networks.sortBy(x => x.score).last
 
-    println("Best network.neurons.length: " + trainingNetwork.neurons.length)
-    Loan.loan(new FileOutputStream("Best-Network-" + LocalDateTime.now().withNano(0).toString + ".obj")).to { fos =>
-      val oos = new ObjectOutputStream(fos)
-      oos.writeObject(trainingNetwork)
-      oos.close
-    }
+    logger.info("Best network.neurons.length: " + bestNetwork.neurons.length)
+    var networkName: String = "" //Store current network name for easy viewing
+    Persistent.WriteWithTimestamp({ ts =>
+      networkName = s"Best-Network-$ts.obj"
+      networkName
+    }, { oos =>
+      oos.writeObject(bestNetwork)
+    })
 
-    generation.storeToFile("Generation-" + LocalDateTime.now().withNano(0).toString + ".obj")
+    Persistent.WriteWithTimestamp({ ts => s"Generation-$ts.obj" }, { oos =>
+      oos.writeObject(generation)
+    })
+
+    networkName
   }
 
   def evaluate(lInput: PlayerInputProvider, rInput: PlayerInputProvider, showUI: Boolean) = {
@@ -127,13 +138,13 @@ object NEAT extends Logging {
             Thread.sleep(sleepTimeMs, sleepTimeNs)
           } catch {
             case ex: InterruptedException => {
-              System.err.println("Sleep interrupted? " + ex)
+              logger.error("Sleep interrupted? " + ex)
             }
           }
         }
 
         while (sleepTime < 0) {
-          System.err.println("Uh oh... catching up.")
+          logger.warn("Uh oh... catching up.")
           s.step()
           stepCounter = stepCounter + 1
           sleepTime += framePeriod

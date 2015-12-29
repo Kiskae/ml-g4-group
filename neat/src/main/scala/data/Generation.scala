@@ -1,9 +1,8 @@
 package data
 
-import java.io.{FileOutputStream, ObjectOutputStream}
 import java.util.concurrent.ThreadLocalRandom
 
-import misc.{Loan, Probability}
+import misc.Probability
 import mutation.NetworkBreeder
 import neural.NeuralNetwork
 
@@ -12,10 +11,6 @@ import scala.util.Random
 
 class Generation(var species: Seq[Species]) extends Serializable {
   var currentGeneration = 0
-  val eliminationPercentage = 0.3
-  val newConnectionProbability = Probability(0.1)
-  val newNodeProbability = Probability(0.1)
-  val deleteConnectionProbability = Probability(0.05)
 
   def networks: Seq[NeuralNetwork] = {
     species.flatMap(_.networks)
@@ -32,7 +27,7 @@ class Generation(var species: Seq[Species]) extends Serializable {
 
   private def mutate(r: Random) = {
     for (n <- networks) {
-      if (newConnectionProbability.test(r)) {
+      if (Generation.newConnectionProbability.test(r)) {
         val inputNeurons = n.getInputNeurons ++ n.hiddenNeurons
         var startNeuron = inputNeurons(r.nextInt(inputNeurons.length))
 
@@ -47,11 +42,11 @@ class Generation(var species: Seq[Species]) extends Serializable {
         n.createConnection(startNeuron, endNeuron, newConnectionWeight(r))
       }
 
-      if (newNodeProbability.test(r)) {
+      if (Generation.newNodeProbability.test(r)) {
         n.addHiddenNeuron(n.newNeuron)
       }
 
-      if (deleteConnectionProbability.test(r)) {
+      if (Generation.deleteConnectionProbability.test(r)) {
         n.deleteRandomConnection(r)
       }
     }
@@ -65,7 +60,8 @@ class Generation(var species: Seq[Species]) extends Serializable {
     species = species.map { specie =>
       //For each specie: murder the bottom N percent, replace population
       //by breeding the rest.
-      (specie, specie.networks.sortBy(_.score).slice((networks.length * eliminationPercentage).toInt, networks.length))
+      val networks = specie.networks
+      (specie, networks.sortBy(_.score).slice((networks.length * Generation.eliminationPercentage).toInt, networks.length))
     }.map { case (specie, networks) =>
       val scores = networks.map(_.score)
       val min = math.abs(scores.min)
@@ -108,12 +104,11 @@ class Generation(var species: Seq[Species]) extends Serializable {
   def getBestPrototypes: Seq[NeuralNetwork] = {
     species.map(_.getBestNetwork)
   }
+}
 
-  def storeToFile(filename: String) = {
-    Loan.loan(new FileOutputStream(filename)).to { fos =>
-      val oos = new ObjectOutputStream(fos)
-      oos.writeObject(this)
-      oos.close()
-    }
-  }
+object Generation {
+  val eliminationPercentage = 0.3
+  val newConnectionProbability = Probability(0.1)
+  val newNodeProbability = Probability(0.1)
+  val deleteConnectionProbability = Probability(0.05)
 }

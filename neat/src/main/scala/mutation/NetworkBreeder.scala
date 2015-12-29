@@ -1,8 +1,6 @@
 package mutation
 
-import neural.{Neuron, NeuralNetwork}
-
-import scala.collection.mutable.ArrayBuffer
+import neural.{NeuralNetwork, Neuron}
 
 /**
   * Created by bas on 22-12-15.
@@ -18,39 +16,31 @@ object NetworkBreeder {
 
     val innovationNumbers = (network1.getInnovationNumbers ++ network2.getInnovationNumbers).distinct.sorted
 
-    for(innovationNumber <- innovationNumbers){
+    for (innovationNumber <- innovationNumbers) {
       val connection1 = network1.getConnectionByNumber(innovationNumber)
       val connection2 = network2.getConnectionByNumber(innovationNumber)
 
       (connection1, connection2) match {
-        case (Some(c1), Some(c2)) => {
+        case (Some(c1), Some(c2)) =>
           // Take the connection from the fittest parent
           if (network1.score > network2.score) {
-            offspring.createConnection(offspring.getNeuron(c1._1.label), offspring.getNeuron(c1._2.label), c1._3)
-          }else {
-            offspring.createConnection(offspring.getNeuron(c2._1.label), offspring.getNeuron(c2._2.label), c2._3)
+            buildConnection(offspring, c1)
+          } else {
+            buildConnection(offspring, c2)
           }
-        }
-        case (Some(c1), None) => {
-          offspring.createConnection(offspring.getNeuron(c1._1.label), offspring.getNeuron(c1._2.label), c1._3)
-        }
-        case (None, Some(c2)) => {
-          offspring.createConnection(offspring.getNeuron(c2._1.label), offspring.getNeuron(c2._2.label), c2._3)
-        }
+        case (Some(c1), None) => buildConnection(offspring, c1)
+        case (None, Some(c2)) => buildConnection(offspring, c2)
       }
     }
 
     offspring
   }
 
+  private def buildConnection(out: NeuralNetwork, template: NeuralNetwork.Connection) = {
+    out.createConnection(out.getNeuron(template.start.label), out.getNeuron(template.end.label), template.weight)
+  }
+
   def recreate(neurons: Seq[Neuron]): Seq[Neuron] = {
-    var newNeurons = new ArrayBuffer[Neuron]
-
-    for(neuron <- neurons){
-      val newNeuron = new Neuron(neuron.label)
-      newNeurons += newNeuron
-    }
-
-    newNeurons
+    neurons.map(n => new Neuron(n.label))
   }
 }

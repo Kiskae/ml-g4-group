@@ -1,125 +1,108 @@
 package data
 
 import java.io.{FileOutputStream, ObjectOutputStream}
+import java.util.concurrent.ThreadLocalRandom
 
+import misc.{Loan, Probability}
 import mutation.NetworkBreeder
 import neural.NeuralNetwork
 
 import scala.collection.mutable
-import scala.collection.mutable.ArrayBuffer
 import scala.util.Random
-import scala.util.control.Breaks._
 
 class Generation(var species: Seq[Species]) extends Serializable {
   var currentGeneration = 0
   val eliminationPercentage = 0.3
-  val newConnectionProbability = 0.1
-  val newNodeProbability = 0.1
-  val deleteConnectionProbability = 0.05
+  val newConnectionProbability = Probability(0.1)
+  val newNodeProbability = Probability(0.1)
+  val deleteConnectionProbability = Probability(0.05)
 
   def networks: Seq[NeuralNetwork] = {
     species.flatMap(_.networks)
   }
 
   def evolve() = {
+    val r = ThreadLocalRandom.current()
 
-    mutate
-    breed
+    mutate(r)
+    breed(r)
 
     currentGeneration += 1
   }
 
-  def mutate() = {
-    val r = new Random
-
-    for(n <- networks){
-      if(r.nextInt((1 / newConnectionProbability).toInt) == 0) {
+  private def mutate(r: Random) = {
+    for (n <- networks) {
+      if (newConnectionProbability.test(r)) {
         val inputNeurons = n.getInputNeurons ++ n.hiddenNeurons
         var startNeuron = inputNeurons(r.nextInt(inputNeurons.length))
 
         val outputNeurons = n.getOutputNeurons ++ n.hiddenNeurons
         var endNeuron = outputNeurons(r.nextInt(outputNeurons.length))
 
-        while(startNeuron.label >= endNeuron.label && !n.getOutputNeurons.map(_.label).contains(endNeuron.label)){
+        while (startNeuron.label >= endNeuron.label && !n.getOutputNeurons.contains(endNeuron)) {
           startNeuron = inputNeurons(r.nextInt(inputNeurons.length))
           endNeuron = outputNeurons(r.nextInt(outputNeurons.length))
         }
 
-        n.createConnection(startNeuron, endNeuron, r.nextDouble() * (r.nextInt(9) - 4)) //TODO what is the range of the weights?
+        n.createConnection(startNeuron, endNeuron, newConnectionWeight(r))
       }
 
-      if(r.nextInt((1 / newNodeProbability).toInt) == 0) {
-        val hiddenNeuron = n.newNeuron
-        n.addHiddenNeuron(hiddenNeuron)
+      if (newNodeProbability.test(r)) {
+        n.addHiddenNeuron(n.newNeuron)
       }
 
-      if(r.nextInt((1 / deleteConnectionProbability).toInt) == 0) {
-        n.deleteRandomConnection
+      if (deleteConnectionProbability.test(r)) {
+        n.deleteRandomConnection(r)
       }
     }
   }
 
-  def breed(): Any = {
-    var newSpecies = new ArrayBuffer[Species]
+  private def newConnectionWeight(r: Random): Double = {
+    r.nextDouble() * (r.nextInt(9) - 4) //TODO what is the range of the weights?
+  }
 
-    for(specie <- species) {
-      breakable {
-        //For each specie: murder the bottom N percent, replace population
-        //by breeding the rest.
+  private def breed(r: Random) = {
+    species = species.map { specie =>
+      //For each specie: murder the bottom N percent, replace population
+      //by breeding the rest.
+      (specie, specie.networks.sortBy(_.score).slice((networks.length * eliminationPercentage).toInt, networks.length))
+    }.map { case (specie, networks) =>
+      val scores = networks.map(_.score)
+      val min = math.abs(scores.min)
+      val sum = scores.map(_ + min).sum
 
-        var networks = specie.networks
-        networks = networks.sortBy(_.score).slice((networks.length * eliminationPercentage).toInt, networks.length)
-        networks
-
-        var offspring = new ArrayBuffer[NeuralNetwork]
-
+      if (sum != 0) {
         //create distribution map
-        var distribution = mutable.Map[NeuralNetwork, Double]()
-        val fitnessMin = networks.map(_.score) min
-        val fitnessMax = networks.map(_.score) max
-
-        networks.foreach(x => x.score = x.score + Math.abs(fitnessMin))
-        val fitnessSum = networks.map(_.score) sum
-
-        if (fitnessSum == 0) {
-          newSpecies += specie
-          break
+        val distribution = mutable.Map[NeuralNetwork, Double]()
+        networks.foreach { network =>
+          distribution.put(network, (network.score + min) / sum.toDouble)
         }
 
-        for (network <- networks) {
-          distribution += network -> (network.score / fitnessSum.toFloat)
-        }
-
-        val random = new Random
-
-        // sample
-        for (i <- 0 until specie.networks.length) {
-          val network1 = sample[NeuralNetwork](distribution)
-          val network2 = sample[NeuralNetwork](distribution)
-
-          //TODO Should we make sure they're not the same network?
-          offspring += NetworkBreeder.breed(network1, network2)
-        }
-
-        newSpecies += new Species(offspring)
+        //generate as many networks as there originally were
+        new Species(Seq.fill(specie.networks.size) {
+          NetworkBreeder.breed(
+            sample(distribution, r),
+            sample(distribution, r)
+          )
+        })
+      } else {
+        specie
       }
     }
-
-    if(newSpecies.length > 0) species = newSpecies
   }
 
   // Adapted from http://stackoverflow.com/a/24869852/1357218
-  final def sample[A](dist: mutable.Map[A, Double]): A = {
-    val p = scala.util.Random.nextDouble
+  final def sample[A](dist: mutable.Map[A, Double], r: Random): A = {
+    val p = r.nextDouble()
     val it = dist.iterator
     var accum = 0.0
     while (it.hasNext) {
       val (item, itemProb) = it.next
       accum += itemProb
       if (accum >= p)
-        return item  // return so that we don't have to search through the whole distribution
+        return item // return so that we don't have to search through the whole distribution
     }
-    sys.error(f"this should never happen")  // needed so it will compile
+    sys.error(f"this should never happen") // needed so it will compile
   }
 
   def getBestPrototypes: Seq[NeuralNetwork] = {
@@ -127,8 +110,10 @@ class Generation(var species: Seq[Species]) extends Serializable {
   }
 
   def storeToFile(filename: String) = {
-    val oos = new ObjectOutputStream(new FileOutputStream(filename))
-    oos.writeObject(this)
-    oos.close
+    Loan.loan(new FileOutputStream(filename)).to { fos =>
+      val oos = new ObjectOutputStream(fos)
+      oos.writeObject(this)
+      oos.close()
+    }
   }
 }

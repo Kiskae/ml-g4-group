@@ -1,11 +1,11 @@
 import java.io.{FileOutputStream, ObjectOutputStream}
-import java.util.Calendar
+import java.time.LocalDateTime
 import java.util.concurrent.TimeUnit
 
 import agent.{BallFollower, PlayerInputProvider}
 import data.Generation
 import grizzled.slf4j.Logging
-import misc.Persistent
+import misc.{Loan, Persistent}
 import mutation.NetworkCreator
 import neural.NeuralNetwork
 import server.{GameProperties, GameState, PhysicsProperties}
@@ -28,8 +28,8 @@ object NEAT extends Logging {
 
   def view = {
     val rneuralNetwork = Persistent.ReadObjectFromFile[NeuralNetwork]("Best-Network-2015-12-28T20:57:21.obj")
-        val rInput = new BallFollower(30000L / 2)
-//    val rInput = new NEATInputProvider(rneuralNetwork)
+    val rInput = new BallFollower(30000L / 2)
+    //    val rInput = new NEATInputProvider(rneuralNetwork)
     val neuralNetwork = Persistent.ReadObjectFromFile[NeuralNetwork]("Best-Network-2015-12-28T20:57:21.obj")
 
     val lInput = new NEATInputProvider(neuralNetwork)
@@ -57,7 +57,7 @@ object NEAT extends Logging {
 
       println(s"Starting generation $i/$generationCount.")
 
-      generation.networks.par.foreach( neuralNetwork => {
+      generation.networks.par.foreach(neuralNetwork => {
         val lInput = new NEATInputProvider(neuralNetwork)
         neuralNetwork.score = evaluate(lInput, rInputNetwork, false)
       })
@@ -74,12 +74,13 @@ object NEAT extends Logging {
     trainingNetwork = generation.networks.sortBy(x => x.score).last
 
     println("Best network.neurons.length: " + trainingNetwork.neurons.length)
-    val oos = new ObjectOutputStream(new FileOutputStream("Best-Network-" + Persistent.sdf.format(Calendar.getInstance.getTime) + ".obj"))
-    oos.writeObject(trainingNetwork)
-    oos.close
+    Loan.loan(new FileOutputStream("Best-Network-" + LocalDateTime.now().withNano(0).toString + ".obj")).to { fos =>
+      val oos = new ObjectOutputStream(fos)
+      oos.writeObject(trainingNetwork)
+      oos.close
+    }
 
-    generation.storeToFile("Generation-" + Persistent.sdf.format(Calendar.getInstance.getTime) + ".obj")
-
+    generation.storeToFile("Generation-" + LocalDateTime.now().withNano(0).toString + ".obj")
   }
 
   def evaluate(lInput: PlayerInputProvider, rInput: PlayerInputProvider, showUI: Boolean) = {
@@ -109,7 +110,7 @@ object NEAT extends Logging {
 
         if (s.getMyScore >= cutOffScore) {
           run = false
-        }else if(s.getOpponentScore >= cutOffScore) {
+        } else if (s.getOpponentScore >= cutOffScore) {
           run = false
         }
       }

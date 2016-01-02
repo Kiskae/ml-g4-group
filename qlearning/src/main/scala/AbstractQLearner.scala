@@ -15,16 +15,21 @@ object AbstractQLearner {
 
 abstract class AbstractQLearner extends AlwaysLeftInputProvider {
   import AbstractQLearner.inputs
-  var prev:Option[Tuple2[State,Int]] = None
+  var prev:Option[(State,Int)] = None
+  var prevScore:Int = -1
+
+  private def isGameInit(state: State) =
+    prev == None || prevScore != state.getMyScore + state.getOpponentScore
 
   override def getInput(state: State) = {
     val act = action(state)
-    //println(act)
-    if (!prev.isEmpty) {
+
+    if (!prev.isEmpty && !isGameInit(state)) {
       updateQ(prev.get._1, prev.get._2, state)
     }
 
     prev = Some((state,act))
+    prevScore = state.getMyScore + state.getOpponentScore
 
     inputs(act)
   }

@@ -3,8 +3,7 @@ package carlo
 import agent._
 import agent.{PlayerInput => Input}
 import server.{GameStateInterface => State}
-
-class QTableInputProvider(val randChance: Double, val qTable: QTable) extends AlwaysLeftInputProvider {
+object QTableInputProvider {
   val inputs = Array(
     new Input(false, false, false),
     new Input(false, false, true),
@@ -13,10 +12,13 @@ class QTableInputProvider(val randChance: Double, val qTable: QTable) extends Al
     new Input(true, false, false),
     new Input(true, false, true)
   )
+}
+
+class QTableInputProvider(val qTable: QTable, var randChance: Double = .01) extends AlwaysLeftInputProvider {
 
   val r = scala.util.Random
   
-  override def getInput(state: State) = inputs(policy(state))
+  override def getInput(state: State) = QTableInputProvider.inputs(policy(state))
 
   def policy(state: State) = {
     if (r.nextDouble < randChance)

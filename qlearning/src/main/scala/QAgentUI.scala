@@ -9,17 +9,25 @@ object QAgentUI extends App {
   val physProps:PhysicsProperties = new PhysicsProperties()
 
   val qAgent = new TableQLearner(gameProps,physProps,randChance=0,alpha=0)
+  val bAgent = new agent.BallFollower(gameProps.playerRadius/2)
   val ui:SwingUI = new SwingUI(gameProps)
-  val s:GameState = new GameState(gameProps, physProps, qAgent, qAgent)
+  val s:GameState = new GameState(gameProps, physProps, qAgent, bAgent)
 
   ui.init(s)
   while (true) {
-    qAgent.loadFromFile(new File("QTable.tsv"))
-    while (!s.isFinished()) {
-      s.step()
-      ui.display(s)
-      Thread.sleep(5)
+    try {
+      qAgent.loadFromFile(new File("QTable.tsv"))
+      while (s.lScore + s.rScore < 6) {
+        s.step()
+        ui.display(s)
+        Thread.sleep(5)
+      }
+      s.reset()
+    } catch {
+      case _: Throwable => {
+        println("Error")
+        Thread.sleep(100)
+      }
     }
-    s.reset()
   }
 }

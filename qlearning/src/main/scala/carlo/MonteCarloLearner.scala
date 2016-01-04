@@ -47,6 +47,7 @@ object MonteCarloLearner extends App {
   val bAgent = new agent.BallFollower(gameProps.playerRadius/2)
   val s = new TrainingGameState(gameProps, physProps, qAgent, bAgent);
   val m = s.`match`
+  val r = scala.util.Random
 
   val trainingEpochs = 10000
   var maxHits = 0
@@ -54,6 +55,7 @@ object MonteCarloLearner extends App {
 
   var resultSum = 0
   while (true) {
+    bAgent.offset = r.nextInt((gameProps.playerRadius/2).toInt)+gameProps.playerRadius/4
     val (result, history) = runMatch()
     updateQTable(result,history,0.1)
     s.changeServer()
@@ -65,7 +67,7 @@ object MonteCarloLearner extends App {
       println(f"Completed epoch. result=${resultSum.toFloat/trainingEpochs}%6f randChance=${qAgent.randChance}%6f qSum=${qTable.table.map(_.max).sum}%.0f")
       epochCount = 0
       resultSum = 0
-      qAgent.randChance *= .99
+      qAgent.randChance *= .91
       qTable.writeToFile(qTableFile)
     }
   }

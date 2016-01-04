@@ -4,26 +4,32 @@ import server._
 import scala.collection.mutable
 import java.io.File
 
-object MonteCarloLearner extends App {
-  def runMatch():(Int,mutable.Set[(Int,Int)]) = {
+object MonteCarloSelfTrainer extends App {
+  def runMatch():(Int,mutable.Set[(Int,Int)],mutable.Set[(Int,Int)]) = {
     // (stateNdx,actionNdx)
-    val history = new mutable.HashSet[(Int,Int)]()
+    val lHistory = new mutable.HashSet[(Int,Int)]()
+    val rHistory = new mutable.HashSet[(Int,Int)]()
 
     s.reset()
     while (!m.matchFinished) {
       // This could be dangerous, but qAgent doesn't save the state so it should be okay
-      val stateNdx = qTable.stateNdx(s)
-      val qActionNdx = qAgent.policy(s)
-      val qInput = QTableInputProvider.inputs(qActionNdx)
-      val bInput = bAgent.getInput(s, Side.RIGHT)
+      val lStateNdx = qTable.stateNdx(s)
+      val lActionNdx = qAgent.policy(s)
+      val lInput = QTableInputProvider.inputs(lActionNdx)
 
-      m.step(qInput, bInput)
-      history += ((stateNdx, qActionNdx))
+      val rState = new GameStateSnapshot(s, true)
+      val rStateNdx = qTable.stateNdx(rState)
+      val rActionNdx = qAgent.policy(rState)
+      val rInput = QTableInputProvider.inputs(rActionNdx)
+
+      m.step(lInput, rInput)
+      lHistory += ((lStateNdx, lActionNdx))
+      rHistory += ((rStateNdx, rActionNdx))
     }
 
     val reward = if (s.lScore > 0) 1 else -1
 
-    (reward, history)
+    (reward, lHistory, rHistory)
   }
 
   def updateQTable(reward:Int,history:mutable.Set[(Int,Int)],alpha:Double) {
@@ -44,29 +50,27 @@ object MonteCarloLearner extends App {
   }
 
   val qAgent = new QTableInputProvider(qTable)
-  val bAgent = new agent.BallFollower(gameProps.playerRadius/2)
-  val s = new TrainingGameState(gameProps, physProps, qAgent, bAgent);
+  val s = new TrainingGameState(gameProps, physProps, qAgent, qAgent);
   val m = s.`match`
   val r = scala.util.Random
 
   val trainingEpochs = 10000
-  var maxHits = 0
+  var hits = 0
   var epochCount = 0
 
-  var resultSum = 0
   while (true) {
-    bAgent.offset = r.nextInt((gameProps.playerRadius/2).toInt)+gameProps.playerRadius/4
-    val (result, history) = runMatch()
-    updateQTable(result,history,0.1)
+    val (result, lHistory, rHistory) = runMatch()
+    updateQTable(result,lHistory,0.1)
+    updateQTable(-result,rHistory,0.1)
     s.changeServer()
 
-    resultSum += result
+    hits += s.lHits + s.rHits
     epochCount += 1
 
     if (epochCount >= trainingEpochs) {
-      println(f"Completed epoch. result=${resultSum.toFloat/trainingEpochs}%6f randChance=${qAgent.randChance}%6f qSum=${qTable.table.map(_.max).sum}%.0f")
+      println(f"Completed epoch. hits=${hits.toFloat/trainingEpochs}%6f randChance=${qAgent.randChance}%6f qSum=${qTable.table.map(_.max).sum}%.0f")
       epochCount = 0
-      resultSum = 0
+      hits = 0
       qAgent.randChance *= .91
       qTable.writeToFile(qTableFile)
     }

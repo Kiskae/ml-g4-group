@@ -16,7 +16,11 @@ object NEAT extends Logging {
   def main(args: Array[String]): Unit = {
     logger.info("Starting NEAT!")
 
-    val networkName = train(None, new BallFollower(30000L / 2))
+    val networkName = train(
+      None,
+      new BallFollower(30000L / 2),
+      updateOpponentWithBestNetwork = true
+    )
     //train(
     // Some(Persistent.ReadObjectFromFile[Generation]("Generation-2015-12-28T20:57:21.obj"),
     // new NEATInputProvider(Persistent.ReadObjectFromFile[NeuralNetwork]("network.obj")),

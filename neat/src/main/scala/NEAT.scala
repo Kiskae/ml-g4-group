@@ -7,7 +7,7 @@ import misc.Persistent
 import mutation.NetworkCreator
 import neural.NeuralNetwork
 import server.{GameProperties, GameState, PhysicsProperties}
-import ui.SwingUI
+import ui.{SwingUI, UI}
 
 object NEAT extends Logging {
   val maxIdleSteps = 3000
@@ -102,26 +102,27 @@ object NEAT extends Logging {
     val gameProps = new GameProperties()
     val physProps = new PhysicsProperties()
     val s = new GameState(gameProps, physProps, lInput, rInput)
-    var latestScore = s.getMyScore
-    var stepCounter = 0
-    var latestPointGainedStep = 0
-    val ui = new SwingUI(gameProps)
-    if (showUI) ui.init(s)
+    val ui: Option[UI] = if (showUI) Some(new SwingUI(gameProps)) else None
 
-    val maxFps = 80
-    val NS_PER_SEC = TimeUnit.SECONDS.toNanos(1)
-    val MS_PER_SEC = TimeUnit.SECONDS.toMillis(1)
-    val framePeriod = NS_PER_SEC / maxFps
+    var stepCounter = 0
+    val coreRunnable: (GameState) => Unit = ui.foldLeft({ gs: GameState =>
+      s.step()
+      stepCounter += 1
+    })(uiWrapper)
+
+    //Init UI if present
+    ui.foreach(_.init(s))
+
+    var latestPointGainedStep = 0
     var run = true
 
     while ((stepCounter - latestPointGainedStep) < maxIdleSteps && run) {
-      val beginTime = System.nanoTime()
-      s.step()
-      if (showUI) ui.display(s)
+      val previousScore = s.getMyScore
 
-      if (s.getMyScore > latestScore) {
+      coreRunnable(s)
+
+      if (s.getMyScore > previousScore) {
         latestPointGainedStep = stepCounter
-        latestScore = s.getMyScore
 
         if (s.getMyScore >= cutOffScore) {
           run = false
@@ -129,36 +130,33 @@ object NEAT extends Logging {
           run = false
         }
       }
-
-      if (showUI) {
-        val timeDiff = System.nanoTime() - beginTime
-        var sleepTime = framePeriod - timeDiff
-        if (sleepTime > 0) {
-          try {
-            val tmp = sleepTime * MS_PER_SEC
-            val sleepTimeMs = tmp / NS_PER_SEC
-            val frac = (NS_PER_SEC / MS_PER_SEC)
-            val sleepTimeNs = (sleepTime % frac).toInt
-            Thread.sleep(sleepTimeMs, sleepTimeNs)
-          } catch {
-            case ex: InterruptedException => {
-              logger.error("Sleep interrupted? " + ex)
-            }
-          }
-        }
-
-        while (sleepTime < 0) {
-          logger.warn("Uh oh... catching up.")
-          s.step()
-          stepCounter = stepCounter + 1
-          sleepTime += framePeriod
-        }
-      }
-
-      stepCounter = stepCounter + 1
     }
 
-    ui.dispose()
-    (latestScore - s.getOpponentScore) / stepCounter.toFloat * 1000
+    //Destroy UI if present
+    ui.foreach(_.finish(s))
+
+    (s.getMyScore - s.getOpponentScore) / stepCounter.toFloat * 1000
+  }
+
+  private def uiWrapper(run: (GameState) => Unit, ui: UI): (GameState => Unit) = {
+    val maxFps = 80
+    val framePeriod = TimeUnit.SECONDS.toNanos(1) / maxFps
+
+    (gs: GameState) => {
+      val beginTime = System.nanoTime()
+
+      run(gs)
+      ui.display(gs)
+
+      val timeDiff = System.nanoTime() - beginTime
+      var sleepTime = framePeriod - timeDiff
+      TimeUnit.NANOSECONDS.sleep(sleepTime)
+
+      while (sleepTime < 0) {
+        logger.warn("Uh oh... catching up.")
+        gs.step()
+        sleepTime += framePeriod
+      }
+    }
   }
 }

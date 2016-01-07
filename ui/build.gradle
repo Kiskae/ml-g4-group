@@ -1,0 +1,19 @@
+apply plugin: 'scala'
+
+allprojects { 
+    repositories { 
+        mavenCentral() 
+    }
+} 
+
+// http://stackoverflow.com/a/22640847
+task fatJar(type: Jar) {
+    baseName = project.name + '-all'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
+
+dependencies {
+    compile project(':qlearning')
+    compile project(':neat')
+}

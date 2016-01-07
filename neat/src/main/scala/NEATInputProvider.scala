@@ -1,4 +1,7 @@
+import java.io.File
+
 import agent.{AlwaysLeftInputProvider, PlayerInput}
+import misc.Persistent
 import neural.NeuralNetwork
 import server.GameStateInterface
 
@@ -15,12 +18,17 @@ class NEATInputProvider(val network: NeuralNetwork) extends AlwaysLeftInputProvi
     val playerVelX = gameStateInterface.getMe.getVelX / 4500.0
     val playerVelY = gameStateInterface.getMe.getVelY / 15100.0
 
-//    println(s"Feeding input: ${ballX}, ${ballY}, ${playerX}, ${playerY}")
+    //    println(s"Feeding input: ${ballX}, ${ballY}, ${playerX}, ${playerY}")
     network.setInput(ballX, ballY, playerX, playerY, playerVelX, playerVelY)
     network.evaluate
 
     val Seq(left, right, up) = network.getOutput
-//    println(s"Providing output: left = $left, right = $right, up = $up")
+    //    println(s"Providing output: left = $left, right = $right, up = $up")
     new PlayerInput(left >= 0.5, right >= 0.5, up >= 0.5)
   }
+}
+
+object NEATInputProvider {
+  def readFromFile(file: File): NEATInputProvider =
+    new NEATInputProvider(Persistent.ReadObjectFromFile[NeuralNetwork(file))
 }

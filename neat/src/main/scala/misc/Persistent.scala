@@ -6,8 +6,11 @@ import java.time.LocalDateTime
 object Persistent {
   private val STORAGE_DIRECTORY = new File("storage")
 
-  def ReadObjectFromFile[A](filename: String)(implicit m: scala.reflect.Manifest[A]): A = {
-    val input = new ObjectInputStream(new FileInputStream(new File(STORAGE_DIRECTORY, filename)))
+  def ReadObjectFromFile[A](filename: String)(implicit m: scala.reflect.Manifest[A]): A =
+    ReadObjectFromFile(new File(STORAGE_DIRECTORY, filename))
+
+  def ReadObjectFromFile[A](file: File)(implicit m: scala.reflect.Manifest[A]): A = {
+    val input = new ObjectInputStream(new FileInputStream(file))
     val obj = input.readObject()
     obj match {
       case x if m.runtimeClass.isInstance(x) => x.asInstanceOf[A]

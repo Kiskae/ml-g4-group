@@ -1,8 +1,10 @@
-import server._
-import agent.{PlayerInput => Input}
-import server.{GameStateInterface => State}
-import ui.SwingUI
+package qlearning
+
 import java.io.File
+
+import agent.{PlayerInput => Input}
+import server.{GameStateInterface => State, _}
+import ui.SwingUI
 
 object QAgentUI extends App {
   val gameProps:GameProperties = new GameProperties()

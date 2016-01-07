@@ -1,5 +1,6 @@
-import agent._
-import agent.{PlayerInput => Input}
+package qlearning
+
+import agent.{PlayerInput => Input, _}
 import server.{GameStateInterface => State}
 
 object AbstractQLearner {

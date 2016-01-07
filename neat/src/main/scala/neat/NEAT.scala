@@ -1,3 +1,5 @@
+package neat
+
 import java.util.concurrent.TimeUnit
 
 import agent.{BallFollower, PlayerInputProvider}
@@ -9,6 +11,9 @@ import neural.NeuralNetwork
 import server.{GameProperties, GameState, PhysicsProperties}
 import ui.{SwingUI, UI}
 
+/**
+  * Created by David on 7-1-2016.
+  */
 object NEAT extends Logging {
   val maxIdleSteps = 3000
   val cutOffScore = 5

@@ -1,9 +1,10 @@
-import server._
-import agent.{PlayerInput => Input}
-import server.{GameStateInterface => State}
-import ui.SwingUI
-import java.io.{PrintStream, File}
+package qlearning
+
+import java.io.{File, PrintStream}
 import java.util.Scanner
+
+import agent.{PlayerInput => Input}
+import server.{GameStateInterface => State, _}
 
 class TableQLearner(gameProps:GameProperties, physProps:PhysicsProperties, gamma:Double=0.9, alpha:Double=0.05, randChance:Double=0.1, batchSize:Int=10) extends AbstractQLearner {
   //Initialize Q

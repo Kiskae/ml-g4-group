@@ -1,7 +1,4 @@
-import agent.{KeyboardInputProvider, BallFollower, PlayerInputProvider}
-import server._
-import ui.SwingUI
-import util.control.Breaks._
+package qlearning
 
 object Main extends App {
   val QL = new qLearningExample;

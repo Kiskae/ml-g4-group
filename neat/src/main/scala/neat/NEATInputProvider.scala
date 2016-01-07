@@ -1,3 +1,5 @@
+package neat
+
 import java.io.File
 
 import agent.{AlwaysLeftInputProvider, PlayerInput}

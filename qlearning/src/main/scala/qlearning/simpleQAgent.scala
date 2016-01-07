@@ -1,7 +1,7 @@
-import server._
-import agent._
-import agent.{PlayerInput => Input}
-import server.{GameStateInterface => State}
+package qlearning
+
+import agent.{PlayerInput => Input, _}
+import server.{GameStateInterface => State, _}
 import ui.SwingUI
 
 /**

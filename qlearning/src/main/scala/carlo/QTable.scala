@@ -5,9 +5,10 @@ import server.{GameStateInterface => State}
 import java.io.{PrintStream, File}
 import java.util.Scanner
 
-class QTable(gameProps:GameProperties, physProps:PhysicsProperties) {
+class QTable(gameProps:GameProperties, physProps:PhysicsProperties, fname:Option[String]=None) {
   //Initialize Q
   val table = Array.ofDim[Double](30*10*3*3,6)
+  fname.map{name => loadFromFile(new File(name))}
 
   def mapX(x:Long) = 10+math.floor(x*10/(gameProps.sideWidth*2.0) min 19 max -10).toInt
   def mapY(y:Long) = (y*10/(gameProps.netHeight*3) min 9 max 0).toInt
@@ -20,9 +21,6 @@ class QTable(gameProps:GameProperties, physProps:PhysicsProperties) {
   def ndxAddDim(prevNdx:Int, nextDimRange:Int, nextDim:Int) = prevNdx*nextDimRange + nextDim
 
   def stateNdx(state: State):Int = {
-    val ball = state.getBall
-    val me = state.getMe
-
     val diffX = mapX(state.getBall.getPosX - state.getMe.getPosX)
     val diffY = mapY(state.getBall.getPosY - state.getMe.getPosY)
     val velY = mapVel(state.getBall.getVelY)

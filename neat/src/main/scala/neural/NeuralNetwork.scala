@@ -135,6 +135,6 @@ class NeuralNetwork(neuronsInCount: Int = 0, neuronsOutCount: Int = 0) extends S
 
 object NeuralNetwork {
 
-  case class Connection(start: Neuron, end: Neuron, weight: Double, innovation: Int)
+  case class Connection(start: Neuron, end: Neuron, var weight: Double, innovation: Int)
 
 }

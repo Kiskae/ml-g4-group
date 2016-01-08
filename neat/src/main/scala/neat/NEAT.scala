@@ -57,7 +57,7 @@ object NEAT extends Logging {
             updateOpponentWithBestNetwork: Boolean = false): String = {
 
     val generationCount = 100
-    val speciesCount = 5
+    val speciesCount = 20
     val networksPerSpecies = 20
     val inputLayerCount = 6
     val outputLayerCount = 3

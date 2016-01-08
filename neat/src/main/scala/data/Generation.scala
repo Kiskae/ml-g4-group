@@ -34,7 +34,7 @@ class Generation(var species: Seq[Species]) extends Serializable {
         val outputNeurons = n.getOutputNeurons ++ n.hiddenNeurons
         var endNeuron = outputNeurons(r.nextInt(outputNeurons.length))
 
-        while (startNeuron.label <= endNeuron.label && !n.getOutputNeurons.contains(endNeuron)) {
+        while (startNeuron.layer >= endNeuron.layer && !n.getOutputNeurons.contains(endNeuron)) {
           startNeuron = inputNeurons(r.nextInt(inputNeurons.length))
           endNeuron = outputNeurons(r.nextInt(outputNeurons.length))
         }
@@ -42,7 +42,7 @@ class Generation(var species: Seq[Species]) extends Serializable {
         n.createConnection(startNeuron, endNeuron, newConnectionWeight(r))
       }
 
-      if (Generation.newNodeProbability.test(r) && n.getConnections.length > 0) {
+      if (Generation.newNodeProbability.test(r) && n.getConnections.nonEmpty) {
         val connection = n.getRandomConnection(r)
         val startNode = connection.start
         val endNode = connection.end
@@ -50,14 +50,14 @@ class Generation(var species: Seq[Species]) extends Serializable {
 
         n.deleteConnection(connection)
 
-        val newNeuron = n.newNeuron
+        val newNeuron = n.newNeuron(startNode.layer / 2 + endNode.layer / 2)
         n.addHiddenNeuron(newNeuron)
 
         n.createConnection(startNode, newNeuron, weight)
         n.createConnection(newNeuron, endNode, newConnectionWeight(r))
       }
 
-      if (Generation.changeWeightProbability.test(r) && n.getConnections.length > 0) {
+      if (Generation.changeWeightProbability.test(r) && n.getConnections.nonEmpty) {
         val connections = n.getConnections
 
         val c = connections(r.nextInt(connections.length))
@@ -126,8 +126,8 @@ class Generation(var species: Seq[Species]) extends Serializable {
 
 object Generation {
   val eliminationPercentage = 0.3
-  val newConnectionProbability = Probability(0.1)
-  val newNodeProbability = Probability(1.0)
-  val deleteConnectionProbability = Probability(0.05)
+  val newConnectionProbability = Probability(0.05)
+  val newNodeProbability = Probability(0.03)
+  val deleteConnectionProbability = Probability(0.02)
   val changeWeightProbability = Probability(0.15)
 }

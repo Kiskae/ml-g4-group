@@ -3,7 +3,7 @@ package neural
 /**
   * Created by bas on 21-12-15.
   */
-class Neuron(val label: Int) extends Serializable {
+class Neuron(val layer: Int, val label: Int) extends Serializable {
   private var inputNeurons: Seq[InputNeuron] = Seq()
   /** value is used for the input values. */
   var value: Option[Double] = None
@@ -13,16 +13,13 @@ class Neuron(val label: Int) extends Serializable {
     * Neuron with the input neurons.
     */
   def evaluate(depth: Int): Double = {
-    if (depth > 20) {
-      println("DERP")
-    }
     value.getOrElse {
       inputNeurons.map(n => n.other.evaluate(depth + 1) * n.weight).sum
     }
   }
 
   def addInputNeuron(inputNeuron: Neuron, weight: Double, innovationNumber: Int) = {
-    require(inputNeuron != this)
+    require(inputNeuron.layer < layer)
     inputNeurons = inputNeurons :+ InputNeuron(inputNeuron, weight, innovationNumber)
   }
 

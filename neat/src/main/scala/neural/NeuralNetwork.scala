@@ -7,16 +7,16 @@ import scala.util.Random
 
 class NeuralNetwork(neuronsInCount: Int = 0, neuronsOutCount: Int = 0) extends Serializable {
   var hiddenNeurons = new ArrayBuffer[Neuron]
-  private var inputNeurons = neuronSeq(neuronsInCount)
-  private var outputNeurons = neuronSeq(neuronsOutCount, neuronsInCount)
+  private var inputNeurons = neuronSeq(0, neuronsInCount)
+  private var outputNeurons = neuronSeq(Int.MaxValue, neuronsOutCount, neuronsInCount)
   private var connections: IndexedSeq[NeuralNetwork.Connection] = IndexedSeq()
   private var output: Option[Seq[Double]] = None
   var score = 0.0
 
-  def newNeuron: Neuron = new Neuron(getNextLabelAndIncrement)
+  def newNeuron(layer: Int): Neuron = new Neuron(layer, getNextLabelAndIncrement)
 
-  private def neuronSeq(length: Int, offset: Int = 0): Seq[Neuron] = {
-    (0 until length).map(i => new Neuron(-i - offset)).toSeq
+  private def neuronSeq(layer: Int, length: Int, offset: Int = 0): Seq[Neuron] = {
+    (0 until length).map(i => new Neuron(layer, -i - offset)).toSeq
   }
 
   private def getNextLabelAndIncrement = {
@@ -114,9 +114,9 @@ class NeuralNetwork(neuronsInCount: Int = 0, neuronsOutCount: Int = 0) extends S
 
   def getHiddenNeurons: Seq[Neuron] = hiddenNeurons
 
-  def ensureHiddenNeurons(labels: Seq[Int]) = {
-    val toAdd = labels.toSet -- hiddenNeurons.map(_.label)
-    toAdd.foreach(label => this.addHiddenNeuron(new Neuron(label)))
+  def ensureHiddenNeurons(neurons: Seq[Neuron]) = {
+    val toAdd: Set[Neuron] = neurons.toSet -- hiddenNeurons
+    toAdd.foreach(n => this.addHiddenNeuron(new Neuron(n.layer, n.label)))
   }
 
   def deleteRandomConnection(rand: Random): Any = {

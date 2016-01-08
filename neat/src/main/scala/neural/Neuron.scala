@@ -12,13 +12,17 @@ class Neuron(val label: Int) extends Serializable {
     * Return the value if set, otherwise evaluate this
     * Neuron with the input neurons.
     */
-  def evaluate: Double = {
+  def evaluate(depth: Int): Double = {
+    if (depth > 20) {
+      println("DERP")
+    }
     value.getOrElse {
-      inputNeurons.map(n => n.other.evaluate * n.weight).sum
+      inputNeurons.map(n => n.other.evaluate(depth + 1) * n.weight).sum
     }
   }
 
   def addInputNeuron(inputNeuron: Neuron, weight: Double, innovationNumber: Int) = {
+    require(inputNeuron != this)
     inputNeurons = inputNeurons :+ InputNeuron(inputNeuron, weight, innovationNumber)
   }
 

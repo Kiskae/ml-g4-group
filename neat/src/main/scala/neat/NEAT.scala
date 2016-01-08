@@ -1,6 +1,6 @@
 package neat
 
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.{ThreadLocalRandom, TimeUnit}
 
 import agent.{BallFollower, PlayerInputProvider}
 import data.Generation
@@ -24,10 +24,11 @@ object NEAT extends Logging {
   def main(args: Array[String]): Unit = {
     logger.info("Starting NEAT!")
 
-    val generation = Persistent.ReadObjectFromFile[Generation]("Generation-2016-01-08T11-31-20.obj")
+//    val generation = Persistent.ReadObjectFromFile[Generation]("Generation-2016-01-08T11-58-38.obj")
 
     val networkName = train(
-      Some(generation),
+//      Some(generation),
+      None,
       new BallFollower(30000L / 2),
       updateOpponentWithBestNetwork = true
     )
@@ -56,7 +57,7 @@ object NEAT extends Logging {
             updateOpponentWithBestNetwork: Boolean = false): String = {
 
     val generationCount = 100
-    val speciesCount = 50
+    val speciesCount = 5
     val networksPerSpecies = 20
     val inputLayerCount = 6
     val outputLayerCount = 3
@@ -71,6 +72,7 @@ object NEAT extends Logging {
     var opponent = initialOpponent
     for (i <- 0 until generationCount) {
       generation.evolve()
+      generation.mutate(ThreadLocalRandom.current())
 
       logger.info(s"Starting generation $i/$generationCount.")
 
@@ -90,6 +92,8 @@ object NEAT extends Logging {
       if (updateOpponentWithBestNetwork) {
         opponent = new NEATInputProvider(generation.networks.sortBy(x => x.score).last)
       }
+
+      generation.breed(ThreadLocalRandom.current())
     }
 
     // Store best network.

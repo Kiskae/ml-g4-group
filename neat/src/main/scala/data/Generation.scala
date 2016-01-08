@@ -46,6 +46,13 @@ class Generation(var species: Seq[Species]) extends Serializable {
         n.addHiddenNeuron(n.newNeuron)
       }
 
+      if (Generation.changeWeightProbability.test(r) && n.getConnections.length > 0) {
+        val connections = n.getConnections
+
+        val c = connections(r.nextInt(connections.length))
+        c.weight = newConnectionWeight(r)
+      }
+
       if (Generation.deleteConnectionProbability.test(r)) {
         n.deleteRandomConnection(r)
       }
@@ -111,4 +118,5 @@ object Generation {
   val newConnectionProbability = Probability(0.1)
   val newNodeProbability = Probability(0.1)
   val deleteConnectionProbability = Probability(0.05)
+  val changeWeightProbability = Probability(0.15)
 }

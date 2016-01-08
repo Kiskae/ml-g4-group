@@ -32,5 +32,5 @@ class NEATInputProvider(val network: NeuralNetwork) extends AlwaysLeftInputProvi
 
 object NEATInputProvider {
   def readFromFile(file: File): NEATInputProvider =
-    new NEATInputProvider(Persistent.ReadObjectFromFile[NeuralNetwork(file))
+    new NEATInputProvider(Persistent.ReadObjectFromFile[NeuralNetwork](file))
 }

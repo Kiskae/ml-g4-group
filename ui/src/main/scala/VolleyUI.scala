@@ -21,7 +21,7 @@ object VolleyUI extends App {
   val lAgent = getAgent(args(0),args(1))
   val rAgent = getAgent(args(2),args(3))
 
-  val game = new GameState(gameProps, physProps, lAgent, rAgent);
+  val game = new GameState(gameProps, physProps, lAgent, rAgent)
 
   new GameLoop(60, ui, game).run()
 

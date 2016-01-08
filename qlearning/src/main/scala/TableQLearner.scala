@@ -5,7 +5,7 @@ import ui.SwingUI
 import java.io.{PrintStream, File}
 import java.util.Scanner
 
-class TableQLearner(gameProps:GameProperties, physProps:PhysicsProperties, gamma:Double=0.9, alpha:Double=0.05, randChance:Double=0.1, batchSize:Int=10) extends AbstractQLearner {
+class TableQLearner(gameProps:GameProperties, physProps:PhysicsProperties, gamma:Double=0.9, var alpha:Double=0.05, var randChance:Double=0.1, batchSize:Int=10) extends AbstractQLearner {
   //Initialize Q
   val qTable = Array.ofDim[Double](30*10*3*3,6)
 
@@ -15,7 +15,8 @@ class TableQLearner(gameProps:GameProperties, physProps:PhysicsProperties, gamma
   //Transaction history
   val tHistSize:Int = 1000000
   var tHistCount:Int = 0
-  val transHist = Array.ofDim[(Int, Int, Double, Int)](tHistSize)
+  val transHist:CircularBuffer[(Int, Int, Double, Int)] = new CircularBuffer[(Int, Int, Double, Int)](tHistSize)
+//  val transHist = Array.ofDim[(Int, Int, Double, Int)](tHistSize)
 
   def mapX(x:Long) = 10+math.floor(x*10/(gameProps.sideWidth*2.0) min 19 max -10).toInt
   def mapY(y:Long) = (y*10/(gameProps.netHeight*3) min 9 max 0).toInt
@@ -62,11 +63,10 @@ class TableQLearner(gameProps:GameProperties, physProps:PhysicsProperties, gamma
 
   override def updateQ(state: State, action: Int, nextState: State) {
 
-    //TODO Michael do we still need to add the state to the qtable?
-    val row = qRow(state)
+    if (stateNdx(state) == stateNdx(nextState)) return
 
     //Safe to history, using a modulo seems to be the fastest way.
-    transHist(tHistCount % tHistSize) =  (stateNdx(state), action, reward(nextState), stateNdx(nextState))
+    transHist.append((stateNdx(state), action, reward(nextState), stateNdx(nextState)))
     if(tHistCount != tHistSize) tHistCount += 1
 
     //Perform minibatch
@@ -82,6 +82,10 @@ class TableQLearner(gameProps:GameProperties, physProps:PhysicsProperties, gamma
       row(t._2) = (1-alpha)*row(t._2) + alpha*(t._3 + gamma*rowNext.max)
     }
 
+    //Simple annealing will stop at 0.1 ( ~ 10^7 steps until to get to 0.1)
+    if (randChance > 0.00000001) randChance = randChance*0.999999992
+    if (alpha > 0.000000001) alpha = alpha*0.999999992
+
   }
 
   override def reward(state: State) = {
@@ -89,9 +93,9 @@ class TableQLearner(gameProps:GameProperties, physProps:PhysicsProperties, gamma
     if (mapY(state.getBall.getPosY) > 0)
       0
     else if (mapX(state.getBall.getPosX) < 10)
-      -100
+      -1
     else
-      100
+      1
   }
 
   def writeToFile(file:File) {
@@ -119,11 +123,11 @@ object QAgentTrainer extends App {
   val physProps:PhysicsProperties = new PhysicsProperties()
 
   val qAgent = new TableQLearner(gameProps,physProps)
-  //val bAgent = new agent.BallFollower(gameProps.playerRadius/2)
-  val s:GameState = new GameState(gameProps, physProps, qAgent, qAgent);
+  val bAgent = new agent.BallFollower(gameProps.playerRadius/2)
+  val s:GameState = new GameState(gameProps, physProps, qAgent, bAgent);
 
   val qTableFile = new File("QTable.tsv")
-  val trainingEpochs = 10000
+  val trainingEpochs = 1000
 
   if (qTableFile.exists) {
     qAgent.loadFromFile(qTableFile)
@@ -131,15 +135,21 @@ object QAgentTrainer extends App {
 
   while (true) {
     s.reset()
-    var hitCount:Long = 0
+    //var hitCount:Long = 0
+    var scoreCountL:Long = 0
+    var scoreCountR:Long = 0
     1 to trainingEpochs foreach { _ =>
       while (!s.isFinished) {
         s.step()
       }
-      hitCount += s.rHits + s.lHits
+      //hitCount += s.lHits
+      scoreCountL += s.lScore
+      scoreCountR += s.rScore
       s.reset()
     }
-    println(f"Completed epoch... average hits: ${hitCount.toFloat/trainingEpochs}%6f")
+
+    println(f"Completed epoch: Alpha: ${qAgent.alpha}%6f  RandC: ${qAgent.randChance}%6f Average score: ${(scoreCountL - scoreCountR).toFloat/trainingEpochs}%6f Q: " + (qAgent.qTable.map(_.sum).sum)/16200)
+    //println(f"Completed epoch: Alpha: ${qAgent.alpha}%6f Average score: ${(scoreCountL - scoreCountR).toFloat/trainingEpochs}%6f average hits: ${hitCount.toFloat/trainingEpochs}%6f " + " RandChance: " + qAgent.randChance)
 
     qAgent.writeToFile(qTableFile)
   }

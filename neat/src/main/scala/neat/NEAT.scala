@@ -21,8 +21,10 @@ object NEAT extends Logging {
   def main(args: Array[String]): Unit = {
     logger.info("Starting NEAT!")
 
+    val generation = Persistent.ReadObjectFromFile[Generation]("Generation-2016-01-08T11-31-20.obj")
+
     val networkName = train(
-      None,
+      Some(generation),
       new BallFollower(30000L / 2),
       updateOpponentWithBestNetwork = true
     )
@@ -49,9 +51,9 @@ object NEAT extends Logging {
   def train(initialGeneration: Option[Generation],
             initialOpponent: PlayerInputProvider,
             updateOpponentWithBestNetwork: Boolean = false): String = {
-    val generationCount = 10
-    val speciesCount = 5
-    val networksPerSpecies = 100
+    val generationCount = 100
+    val speciesCount = 50
+    val networksPerSpecies = 20
     val inputLayerCount = 6
     val outputLayerCount = 3
 

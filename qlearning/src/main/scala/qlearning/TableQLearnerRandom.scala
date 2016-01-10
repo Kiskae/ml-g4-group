@@ -11,7 +11,7 @@ import java.util.Scanner
 
 import scala.util.control.Breaks._
 
-class TableQLearnerRandom(gameProps:GameProperties, physProps:PhysicsProperties, gamma:Double=0.9, var alpha:Double=0.001, var randChance:Double=1, batchSize:Int=10) extends AbstractQLearner {
+class TableQLearnerRandom(gameProps:GameProperties, physProps:PhysicsProperties, gamma:Double=0.9, var alpha:Double=0.01, var randChance:Double=0.01, batchSize:Int=10) extends AbstractQLearner {
   //Initialize Q
   val qTable = Array.ofDim[Double](30*10*3*3,6)
 

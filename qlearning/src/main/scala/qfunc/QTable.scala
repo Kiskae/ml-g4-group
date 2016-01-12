@@ -7,7 +7,7 @@ import java.util.Scanner
 
 class QTable(gameProps:GameProps, physProps:PhysProps, alpha:Double = 0.1, fname:Option[String] = None) extends QFunction[Int] {
   //Initialize Q
-  val table = Array.ofDim[Double](30*10*3*3,6)
+  lazy val table = Array.ofDim[Double](30*10*3*3,6)
   fname.map{name => loadFromFile(new File(name))}
 
   def mapX(x:Long) = 10+math.floor(x*10/(gameProps.sideWidth*2.0) min 19 max -10).toInt

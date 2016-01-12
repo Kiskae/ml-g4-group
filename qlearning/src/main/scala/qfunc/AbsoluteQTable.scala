@@ -4,8 +4,7 @@ import server._
 import server.{GameStateInterface => State, GameProperties => GameProps, PhysicsProperties => PhysProps}
 
 class AbsoluteQTable(gameProps:GameProps, physProps:PhysProps, alpha:Double = 0.1, fname:Option[String] = None) extends QTable(gameProps, physProps, alpha=alpha, fname=fname) {
-  
-  override val table = Array.ofDim[Double](11*10*20*10*3*3,6)
+  override lazy val table = Array.ofDim[Double](11*10*20*10*3*3,6)
 
   override def mapVel(vel:Long) =  1+math.signum(vel / (physProps.playerHorizontalSpeed/2)).toInt
 

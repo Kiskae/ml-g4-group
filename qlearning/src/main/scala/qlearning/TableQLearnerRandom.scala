@@ -1,7 +1,6 @@
 package qlearning
 
 import common.CircularBuffer
-import qlearning.AbstractQLearner
 import server._
 import agent.{PlayerInput => Input}
 import server.{GameStateInterface => State}

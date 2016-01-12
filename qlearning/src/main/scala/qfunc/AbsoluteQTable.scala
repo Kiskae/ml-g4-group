@@ -21,6 +21,4 @@ class AbsoluteQTable(gameProps:GameProps, physProps:PhysProps, alpha:Double = 0.
 
     out
   }
-
-  override def qRow(stateRepr: Int): Array[Double] = ???
 }

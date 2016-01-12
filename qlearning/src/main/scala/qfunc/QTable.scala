@@ -31,10 +31,10 @@ class QTable(gameProps:GameProps, physProps:PhysProps, alpha:Double = 0.1) exten
     ndxAddDim(ndxAddDim(ndxAddDim(diffX,10,diffY),3,velY),3,velX)
   }
 
-  override def qRow(stateNdx: Int) = table(stateNdx)
+  override def qRowRepr(stateNdx: Int) = table(stateNdx)
 
-  override def update(stateNdx: Int, action: Int, newVal: Double) {
-    val row = qRow(stateNdx)
+  override def updateRepr(stateNdx: Int, action: Int, newVal: Double) {
+    val row = qRowRepr(stateNdx)
     row(action) = (1-alpha)*row(action) + alpha*newVal
   }
 

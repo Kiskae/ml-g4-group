@@ -9,16 +9,42 @@ object QTrainMain extends App {
   val gameProps = new GameProperties()
   val physProps = new PhysicsProperties()
 
-  val qFile = new java.io.File(args(1))
-  val qFunc = QFunction(gameProps, physProps, args(0), qFile)
-  val runner = Runner(args(2))
-  val trainer = Trainer(args(3))
+  val qFuncFile = new java.io.File(args(1))
+  val qFunc = QFunction(gameProps, physProps, args(0), qFuncFile)
+  val runner = Runner(gameProps, physProps, args(2))
+  val trainer = Trainer(gameProps, physProps, args(3))
 
   val qAgent = new QFunctionInputProvider(qFunc)
-  val state = new GameState(gameProps, physProps, qAgent, qAgent)
+  val state = new carlo.TrainingGameState(gameProps, physProps, qAgent, qAgent)
+
+  val trainingEpochs = 10000
+  val saveDelay = 100
+  var saveDelayCount = 0
+  var hits = 0
+  var reward = 0
+  var epochCount = 0
 
   while (true) {
-    val (reward, history) = runner.run(state, qFunc, qAgent)
-    trainer.train(reward, history, qFunc)
+    val (result, history) = runner.run(state, qFunc, qAgent)
+    trainer.train(result, history, qFunc)
+    state.changeServer()
+
+    hits += state.lHits + state.rHits
+    reward += result
+    epochCount += 1
+
+    if (epochCount >= trainingEpochs) {
+      println(f"Completed epoch. hits=${hits.toFloat/trainingEpochs}%.4f reward=${reward.toFloat/trainingEpochs}%.4f randChance=${qAgent.randChance}%6f")
+      epochCount = 0
+      hits = 0
+      reward = 0
+      //if (qAgent.randChance > .001) qAgent.randChance *= .99
+      qAgent.randChance *= .99
+      saveDelayCount += 1
+      if (saveDelayCount >= saveDelay) {
+        qFunc.writeToFile(qFuncFile)
+        saveDelayCount = 0
+      }
+    }
   }
 }

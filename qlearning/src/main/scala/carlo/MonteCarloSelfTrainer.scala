@@ -71,7 +71,7 @@ object MonteCarloSelfTrainer extends App {
       println(f"Completed epoch. hits=${hits.toFloat/trainingEpochs}%6f randChance=${qAgent.randChance}%6f qSum=${qTable.table.map(_.max).sum}%.0f")
       epochCount = 0
       hits = 0
-      qAgent.randChance *= .91
+      if (qAgent.randChance > .001) qAgent.randChance *= .99
       qTable.writeToFile(qTableFile)
     }
   }

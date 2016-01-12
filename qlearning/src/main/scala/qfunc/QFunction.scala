@@ -17,10 +17,14 @@ object QFunction {
   }
 }
 
-trait QFunction[SType] {
+// Hack around Scala's generics
+// http://stackoverflow.com/questions/3716260/covariant-typeparameter-in-scala-needs-to-be-invariant-in-java-interface
+import scala.annotation.unchecked.uncheckedVariance
+
+trait QFunction[+SType] {
   def stateRepr(state: State):SType
-  def qRow(stateRepr: SType):Array[Double]
-  def update(stateRepr: SType, action: Int, newVal: Double):Unit
+  def qRow(stateRepr: SType @uncheckedVariance):Array[Double]
+  def update(stateRepr: SType @uncheckedVariance, action: Int, newVal: Double):Unit
   def writeToFile(file:File):Unit
   def loadFromFile(file:File):Unit
 

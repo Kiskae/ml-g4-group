@@ -23,19 +23,18 @@ object AbsolueMonteCarloSelfTrainer extends App {
     val emptyInput = new PlayerInput(false, false, false)
     val pc = m.ball.pCircle
 
-    setupMatch()
-    //pc.posY = gameProps.netHeight*2
-    //pc.velX = -10000
-    //pc.velY = 0
-    while (m.ball.pCircle.posX <= 0 && !m.matchFinished) {
-      val lStateNdx = qTable.stateRepr(s)
-      val lActionNdx = qAgent.policy(s)
-      val lInput = QTableInputProvider.inputs(lActionNdx)
+    while (s.lHits == 0 && !m.matchFinished) {
+      setupMatch()
+      while (m.ball.pCircle.posX <= 0 && !m.matchFinished) {
+        val lStateNdx = qTable.stateRepr(s)
+        val lActionNdx = qAgent.policy(s)
+        val lInput = QTableInputProvider.inputs(lActionNdx)
 
-      val rInput = emptyInput
+        val rInput = emptyInput
 
-      m.step(lInput, rInput)
-      lHistory += ((lStateNdx, lActionNdx))
+        m.step(lInput, rInput)
+        lHistory += ((lStateNdx, lActionNdx))
+      }
     }
 
     val reward = if (s.rScore > 0) -1 else 1

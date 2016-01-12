@@ -5,7 +5,7 @@ import ui.SwingUI
 object VolleyUI extends App {
   def getAgent(agentType:String, arg:String) = {
     agentType.toLowerCase match {
-      case "qagent" => new carlo.QTableInputProvider(new carlo.QTable(gameProps,physProps,Some(arg)))
+      case "qagent" => new carlo.QTableInputProvider(new carlo.QTable(gameProps,physProps,Some(arg)),0.0)
       case "neat" => new neat.NEATInputProvider(misc.Persistent.ReadObjectFromFile[neural.NeuralNetwork](arg))
       case "human" => new KeyboardInputProvider(ui, arg(0), arg(2), arg(1))
       case "ballfollower" => new BallFollower((gameProps.playerRadius/arg.toDouble).toLong)

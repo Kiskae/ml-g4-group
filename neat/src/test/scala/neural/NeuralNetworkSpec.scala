@@ -6,10 +6,10 @@ class NeuralNetworkSpec extends FlatSpec with Matchers {
 
   def fixture = new {
     val network = new NeuralNetwork
-    val x1 = network.newNeuron
-    val x2 = network.newNeuron
-    val b = network.newNeuron
-    val out = network.newNeuron
+    val x1 = network.newNeuron(0)
+    val x2 = network.newNeuron(0)
+    val b = network.newNeuron(0)
+    val out = network.newNeuron(2)
 
     network.setInputNeurons(Seq(x1, x2, b))
     network.setOutputNeurons(Seq(out))
@@ -35,7 +35,7 @@ class NeuralNetworkSpec extends FlatSpec with Matchers {
 
   it should "do something, What is the expected outcome bas?" in {
     val fix = fixture
-    val hn = fix.network.newNeuron
+    val hn = fix.network.newNeuron(1)
     fix.network.addHiddenNeuron(hn)
 
     fix.network.createConnection(fix.x1, hn, -1.0)

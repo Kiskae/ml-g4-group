@@ -1,6 +1,6 @@
 package neat
 
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.{ThreadLocalRandom, TimeUnit}
 
 import agent.{BallFollower, PlayerInputProvider}
 import data.Generation
@@ -11,17 +11,23 @@ import neural.NeuralNetwork
 import server.{GameProperties, GameState, PhysicsProperties}
 import ui.{SwingUI, UI}
 
+import scala.annotation.tailrec
+
 /**
   * Created by David on 7-1-2016.
   */
 object NEAT extends Logging {
   val maxIdleSteps = 3000
   val cutOffScore = 5
+  val processors = Runtime.getRuntime.availableProcessors()
 
   def main(args: Array[String]): Unit = {
     logger.info("Starting NEAT!")
 
+//    val generation = Persistent.ReadObjectFromFile[Generation]("Generation-2016-01-08T11-58-38.obj")
+
     val networkName = train(
+//      Some(generation),
       None,
       new BallFollower(30000L / 2),
       updateOpponentWithBestNetwork = true
@@ -49,9 +55,10 @@ object NEAT extends Logging {
   def train(initialGeneration: Option[Generation],
             initialOpponent: PlayerInputProvider,
             updateOpponentWithBestNetwork: Boolean = false): String = {
-    val generationCount = 10
-    val speciesCount = 5
-    val networksPerSpecies = 100
+
+    val generationCount = 100
+    val speciesCount = 20
+    val networksPerSpecies = 20
     val inputLayerCount = 6
     val outputLayerCount = 3
 
@@ -65,13 +72,16 @@ object NEAT extends Logging {
     var opponent = initialOpponent
     for (i <- 0 until generationCount) {
       generation.evolve()
+      generation.mutate(ThreadLocalRandom.current())
 
       logger.info(s"Starting generation $i/$generationCount.")
 
-      generation.networks.par.foreach(neuralNetwork => {
-        val lInput = new NEATInputProvider(neuralNetwork)
-        neuralNetwork.score = evaluate(lInput, opponent, showUI = false)
-      })
+      grouped(generation.networks, processors).par.foreach(bagOfNetworks =>
+        bagOfNetworks.foreach(neuralNetwork => {
+          val lInput = new NEATInputProvider(neuralNetwork)
+          neuralNetwork.score = evaluate(lInput, opponent, showUI = false)
+        })
+      )
 
       val bestPrototypes = generation.getBestPrototypes
       logger.info("Best prototypes: " + bestPrototypes)
@@ -82,6 +92,8 @@ object NEAT extends Logging {
       if (updateOpponentWithBestNetwork) {
         opponent = new NEATInputProvider(generation.networks.sortBy(x => x.score).last)
       }
+
+      generation.breed(ThreadLocalRandom.current())
     }
 
     // Store best network.
@@ -163,5 +175,18 @@ object NEAT extends Logging {
         sleepTime += framePeriod
       }
     }
+  }
+
+  def grouped[A](xs: Seq[A], size: Int) = {
+    @tailrec
+    def grouped(xs: Seq[A], size: Int, result: Seq[Seq[A]]): Seq[Seq[A]] = {
+      if (xs.isEmpty) {
+        result
+      } else {
+        val (slice, rest) = xs.splitAt(size)
+        grouped(rest, size, result :+ slice)
+      }
+    }
+    grouped(xs, size, Nil)
   }
 }

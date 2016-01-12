@@ -9,10 +9,10 @@ object NetworkBreeder {
   def breed(network1: NeuralNetwork, network2: NeuralNetwork): NeuralNetwork = {
     val offspring = new NeuralNetwork()
 
-    offspring.setInputNeurons(recreate(network1.getInputNeurons))
-    offspring.setOutputNeurons(recreate(network1.getOutputNeurons))
+    offspring.setInputNeurons(recreate(0, network1.getInputNeurons))
+    offspring.setOutputNeurons(recreate(Int.MaxValue, network1.getOutputNeurons))
 
-    offspring.ensureHiddenNeurons(network2.getHiddenNeurons.map(_.label) ++ network1.getHiddenNeurons.map(_.label))
+    offspring.ensureHiddenNeurons(network2.getHiddenNeurons ++ network1.getHiddenNeurons)
 
     val innovationNumbers = (network1.getInnovationNumbers ++ network2.getInnovationNumbers).distinct.sorted
 
@@ -40,7 +40,7 @@ object NetworkBreeder {
     out.createConnection(out.getNeuron(template.start.label), out.getNeuron(template.end.label), template.weight)
   }
 
-  def recreate(neurons: Seq[Neuron]): Seq[Neuron] = {
-    neurons.map(n => new Neuron(n.label))
+  def recreate(layer: Int, neurons: Seq[Neuron]): Seq[Neuron] = {
+    neurons.map(n => new Neuron(layer, n.label))
   }
 }

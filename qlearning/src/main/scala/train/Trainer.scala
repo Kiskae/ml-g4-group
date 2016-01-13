@@ -7,8 +7,11 @@ object Trainer {
   def apply(gameProps:GameProperties, physProps:PhysicsProperties, s:String):Trainer = {
     println(s"Trainer: $s")
     s.toLowerCase match {
-      case "carlo" => new MonteCarloTrainer()
-      //case "qlearning" => new QLearningTrainer()
+      case "carlo"        => new MonteCarloTrainer()
+      case "qlearning"    => new QLearningTrainer()
+      case "revqlearning" => new RevQLearningTrainer()
+      case "sarsa"        => new SarsaTrainer()
+      case "revsarsa"     => new RevSarsaTrainer()
       case _ => throw new IllegalArgumentException()
     }
   }
@@ -19,10 +22,3 @@ trait Trainer {
   def train[SType](reward:Int, history:Seq[(SType,Int)], qFunc:QFunction[SType])
 }
 
-class MonteCarloTrainer extends Trainer {
-  def train[SType](reward:Int, history:Seq[(SType,Int)], qFunc:QFunction[SType]) {
-    for ((state,action) <- Set()++history) {
-      qFunc.updateRepr(state,action,reward)
-    }
-  }
-}

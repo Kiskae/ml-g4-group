@@ -24,17 +24,24 @@ class RandRunner(gameProps:GameProperties, physProps:PhysicsProperties) extends 
     ball.firstHit = false
   }
 
+  def getSetup(s:GameState) = {
+    val pc = s.`match`.ball.pCircle
+    (pc.posX,pc.posY,pc.velY,pc.velX,s.`match`.lPlayer.pCircle.posX)
+  }
+
   override def run[SType](s:carlo.TrainingGameState, qFunc:QFunction[SType], qAgent:QFunctionInputProvider) = {
     // (stateNdx,actionNdx)
     val history = mutable.ArrayBuffer[(SType,Int)]()
     val emptyInput = new PlayerInput(false, false, false)
     val m = s.`match`
+    val histMaxSize = 1000000
 
     do {
       history.clear()
       setupMatch(s)
+      val setup = getSetup(s)
       var crossNet = false
-      while ((!crossNet || m.ball.pCircle.posX <= 0) && !m.matchFinished) {
+      while ((!crossNet || m.ball.pCircle.posX <= 0) && !m.matchFinished && history.size < histMaxSize) {
         crossNet |= m.ball.pCircle.posX <= 0
         val stateNdx = qFunc.stateRepr(s)
         val actionNdx = qAgent.policy(s)
@@ -47,7 +54,10 @@ class RandRunner(gameProps:GameProperties, physProps:PhysicsProperties) extends 
         val toInsert = (stateNdx, actionNdx)
         if (history.isEmpty || history.last != toInsert) history += toInsert
       }
-    } while (s.lHits == 0 && s.rScore == 0)
+      if (history.size >= histMaxSize) {
+        println(s"setup:$setup hits:${s.lHits}")
+      }
+    } while ((s.lHits == 0 && s.rScore == 0) || history.size >= histMaxSize)
 
     val reward = if (s.rScore > 0) -1 else 1
 

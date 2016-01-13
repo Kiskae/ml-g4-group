@@ -33,8 +33,16 @@ trait QFunction[+SType] {
   def loadFromFile(file:File):Unit
 
   def qRow(state: State):Array[Double] = qRowRepr(stateRepr(state))
+
   def q(state: State, action: Int):Double = qRow(state)(action)
-  def maxAction(state: State):Int = maxNdx(qRow(state))
+  def qRepr(stateRepr: SType @uncheckedVariance, action: Int):Double = qRowRepr(stateRepr)(action)
+
+  def maxAction(state: State):Int = maxActionRepr(stateRepr(state))
+  def maxActionRepr(stateRepr: SType @uncheckedVariance):Int = maxNdx(qRowRepr(stateRepr))
+
+  def maxQ(state: State):Double = maxQRepr(stateRepr(state))
+  def maxQRepr(stateRepr: SType @uncheckedVariance):Double = max(qRowRepr(stateRepr))
+
   def update(state: State, action: Int, newVal: Double):Unit = updateRepr(stateRepr(state), action, newVal)
 
   private def maxNdx(arr:Array[Double]):Int = {
@@ -51,5 +59,18 @@ trait QFunction[+SType] {
     }
 
     maxNdx
+  }
+
+  private def max(arr:Array[Double]):Double = {
+    var max = arr(0)
+    var i = 1
+    while (i < arr.length) {
+      if (arr(i) > max) {
+        max = arr(i)
+      }
+      i += 1
+    }
+
+    max
   }
 }

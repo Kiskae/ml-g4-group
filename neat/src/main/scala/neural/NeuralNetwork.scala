@@ -64,7 +64,8 @@ class NeuralNetwork(neuronsInCount: Int = 0, neuronsOutCount: Int = 0) extends S
   }
 
   def evaluate: Seq[Double] = {
-    output = Some(outputNeurons.map(_.evaluate(0)))
+    neurons.foreach(_.resetCache())
+    output = Some(outputNeurons.map(_.evaluate()))
     output.get
   }
 

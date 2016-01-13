@@ -7,11 +7,9 @@ import data.Generation
 import grizzled.slf4j.Logging
 import misc.Persistent
 import mutation.NetworkCreator
-import neural.{NeuralNetwork, Neuron, SharedNodeCheck}
+import neural.{NeuralNetwork, TraceException}
 import server.{GameProperties, GameState, PhysicsProperties}
 import ui.{SwingUI, UI}
-
-import scala.annotation.tailrec
 
 /**
   * Created by David on 7-1-2016.
@@ -76,12 +74,17 @@ object NEAT extends Logging {
 
       logger.info(s"Starting generation $i/$generationCount.")
 
-      grouped(generation.networks, processors).par.foreach(bagOfNetworks =>
-        bagOfNetworks.foreach(neuralNetwork => {
-          val lInput = new NEATInputProvider(neuralNetwork)
+      generation.networks.par.foreach(neuralNetwork => {
+        println(s"Starting evaluation of NN ${System.identityHashCode(neuralNetwork)} on ${Thread.currentThread()}")
+        val lInput = new NEATInputProvider(neuralNetwork)
+        try {
           neuralNetwork.score = evaluate(lInput, opponent, showUI = false)
-        })
-      )
+        } catch {
+          case th: TraceException =>
+            logger.info(s"Found neuron in network ${System.identityHashCode(neuralNetwork)} on ${Thread.currentThread()}: ${th.stack.map(System.identityHashCode(_))} (secondary = ${th.secondary})")
+            throw new AssertionError()
+        }
+      })
 
       val bestPrototypes = generation.getBestPrototypes
       logger.info("Best prototypes: " + bestPrototypes)
@@ -177,18 +180,5 @@ object NEAT extends Logging {
         sleepTime += framePeriod
       }
     }
-  }
-
-  def grouped[A](xs: Seq[A], size: Int) = {
-    @tailrec
-    def grouped(xs: Seq[A], size: Int, result: Seq[Seq[A]]): Seq[Seq[A]] = {
-      if (xs.isEmpty) {
-        result
-      } else {
-        val (slice, rest) = xs.splitAt(size)
-        grouped(rest, size, result :+ slice)
-      }
-    }
-    grouped(xs, size, Nil)
   }
 }

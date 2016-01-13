@@ -4,18 +4,21 @@ import agent.PlayerInput
 import server._
 import qfunc._
 import scala.collection.mutable
+import math._
 
-class CenterRandRunner(gameProps:GameProperties, physProps:PhysicsProperties) extends Runner {
+class RandRunner(gameProps:GameProperties, physProps:PhysicsProperties) extends Runner {
   val r = scala.util.Random
 
   def setupMatch(s:GameState) {
     s.reset()
     val ball = s.`match`.ball
     val pc = ball.pCircle
-    pc.posX = 0
-    pc.posY = gameProps.netHeight + gameProps.ballRadius + r.nextInt(3*gameProps.netHeight.toInt)
-    pc.velX = -r.nextInt(10000)-1
-    pc.velY = 10000-r.nextInt(20000)
+    pc.posX = gameProps.ballRadius + r.nextInt((gameProps.sideWidth-2*gameProps.ballRadius).toInt)
+    pc.posY = physProps.playerMaxHeight/4 + r.nextInt(3*physProps.playerMaxHeight.toInt/4)
+
+    val angle = r.nextDouble*Pi
+    pc.velY = round(physProps.playerCollisionVelocity*sin(angle))
+    pc.velX = round(physProps.playerCollisionVelocity*cos(angle))
     ball.firstHit = false
   }
 
@@ -28,7 +31,9 @@ class CenterRandRunner(gameProps:GameProperties, physProps:PhysicsProperties) ex
     do {
       history.clear()
       setupMatch(s)
-      while (m.ball.pCircle.posX <= 0 && !m.matchFinished) {
+      var crossNet = false
+      while ((!crossNet || m.ball.pCircle.posX <= 0) && !m.matchFinished) {
+        crossNet |= m.ball.pCircle.posX <= 0
         val stateNdx = qFunc.stateRepr(s)
         val actionNdx = qAgent.policy(s)
         val lInput = qfunc.QFunctionInputProvider.inputs(actionNdx)
@@ -40,7 +45,7 @@ class CenterRandRunner(gameProps:GameProperties, physProps:PhysicsProperties) ex
         val toInsert = (stateNdx, actionNdx)
         if (history.isEmpty || history.last != toInsert) history += toInsert
       }
-    } while (s.lHits == 0 && !m.matchFinished)
+    } while (s.lHits == 0 && s.rScore == 0)
 
     val reward = if (s.rScore > 0) -1 else 1
 

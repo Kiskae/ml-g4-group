@@ -5,6 +5,7 @@ import server._
 
 object Trainer {
   def apply(gameProps:GameProperties, physProps:PhysicsProperties, s:String):Trainer = {
+    println(s"Trainer: $s")
     s.toLowerCase match {
       case "carlo" => new MonteCarloTrainer()
       //case "qlearning" => new QLearningTrainer()

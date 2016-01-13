@@ -4,6 +4,10 @@ import server.{GameStateInterface => State, GameProperties => GameProps, Physics
 import java.io.File
 
 object QFunction {
+  def apply(gameProps:GameProps, physProps:PhysProps, qtype:String, file:String):QFunction[_] = {
+    apply(gameProps,physProps,qtype,new File(file))
+  }
+
   def apply(gameProps:GameProps, physProps:PhysProps, qtype:String, file:File):QFunction[_] = {
     val func = qtype.toLowerCase match {
       case "table" => new QTable(gameProps, physProps)
@@ -30,9 +34,22 @@ trait QFunction[+SType] {
 
   def qRow(state: State):Array[Double] = qRowRepr(stateRepr(state))
   def q(state: State, action: Int):Double = qRow(state)(action)
-  def maxAction(state: State):Int = {
-    val row = qRow(state)
-    row.indexOf(row.max)
-  }
+  def maxAction(state: State):Int = maxNdx(qRow(state))
   def update(state: State, action: Int, newVal: Double):Unit = updateRepr(stateRepr(state), action, newVal)
+
+  private def maxNdx(arr:Array[Double]):Int = {
+    var max = arr(0)
+    var maxNdx = 0
+    var i = 1
+
+    while (i < arr.length) {
+      if (arr(i) > max) {
+        max = arr(i)
+        maxNdx = i
+      }
+      i += 1
+    }
+
+    maxNdx
+  }
 }

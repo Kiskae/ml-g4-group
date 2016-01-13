@@ -1,12 +1,13 @@
 import server._
 import agent._
 import ui.SwingUI
+import qfunc._
 
 object VolleyUI extends App {
   def getAgent(agentType:String, arg:String) = {
     agentType.toLowerCase match {
-      case "qagent" => new carlo.QTableInputProvider(new carlo.QTable(gameProps,physProps,fname=Some(arg)),0.0)
-      case "absqagent" => new qfunc.QFunctionInputProvider(new qfunc.AbsoluteQTable(gameProps,physProps,fname=Some(arg)),0.0)
+      case "qagent" => new QFunctionInputProvider(QFunction(gameProps,physProps,"table",arg),randChance=0.0)
+      case "absqagent" => new QFunctionInputProvider(QFunction(gameProps,physProps,"abstable",arg),randChance=0.0)
       case "neat" => new neat.NEATInputProvider(misc.Persistent.ReadObjectFromFile[neural.NeuralNetwork](arg))
       case "human" => new KeyboardInputProvider(ui, arg(0), arg(2), arg(1))
       case "ballfollower" => new BallFollower((gameProps.playerRadius/arg.toDouble).toLong)

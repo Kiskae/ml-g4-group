@@ -14,7 +14,7 @@ object QFunctionInputProvider {
   )
 }
 
-class QFunctionInputProvider(val qFunc: QFunction[_ <: Any], var randChance: Double = .01) extends AlwaysLeftInputProvider {
+class QFunctionInputProvider(val qFunc: QFunction[_], var randChance: Double = .01) extends AlwaysLeftInputProvider {
 
   val r = scala.util.Random
   

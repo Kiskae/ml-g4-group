@@ -19,6 +19,8 @@ class RandRunner(gameProps:GameProperties, physProps:PhysicsProperties) extends 
     val angle = r.nextDouble*Pi
     pc.velY = round(physProps.playerCollisionVelocity*sin(angle))
     pc.velX = round(physProps.playerCollisionVelocity*cos(angle))
+
+    s.`match`.lPlayer.pCircle.posX = -(gameProps.ballRadius + r.nextInt((gameProps.sideWidth-2*gameProps.ballRadius).toInt))
     ball.firstHit = false
   }
 

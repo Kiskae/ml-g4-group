@@ -1,5 +1,7 @@
 package neural
 
+import java.util.concurrent.locks.ReentrantLock
+
 import data.InnovationPool
 
 import scala.collection.mutable.ArrayBuffer
@@ -12,6 +14,7 @@ class NeuralNetwork(neuronsInCount: Int = 0, neuronsOutCount: Int = 0) extends S
   private var connections: IndexedSeq[NeuralNetwork.Connection] = IndexedSeq()
   private var output: Option[Seq[Double]] = None
   var score = 0.0
+  private val evalLock = new ReentrantLock()
 
   def newNeuron(layer: Int): Neuron = new Neuron(layer, getNextLabelAndIncrement)
 
@@ -55,7 +58,7 @@ class NeuralNetwork(neuronsInCount: Int = 0, neuronsOutCount: Int = 0) extends S
     }
   }
 
-  def setInput(inputs: Double*) = {
+  private def setInput(inputs: Double*) = {
     if (inputs.length != inputNeurons.length) {
       throw new IllegalArgumentException("Size of input values doesn't match size of input neurons.")
     }
@@ -63,10 +66,16 @@ class NeuralNetwork(neuronsInCount: Int = 0, neuronsOutCount: Int = 0) extends S
     (neurons, inputs).zipped.foreach((neuron, input) => neuron.setValue(input))
   }
 
-  def evaluate: Seq[Double] = {
-    neurons.foreach(_.resetCache())
-    output = Some(outputNeurons.map(_.evaluate()))
-    output.get
+  def evaluate(inputs: Double*): Seq[Double] = {
+    assert(evalLock.tryLock(), s"Evaluate collision on ${Thread.currentThread()}")
+    try {
+      setInput(inputs: _*)
+      neurons.foreach(_.resetCache())
+      output = Some(outputNeurons.map(_.evaluate()))
+      output.get
+    } finally {
+      evalLock.unlock()
+    }
   }
 
   def thresholdOutput: Seq[Int] = {

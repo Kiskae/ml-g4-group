@@ -1,5 +1,6 @@
 package neat
 
+import java.io.{ByteArrayInputStream, ByteArrayOutputStream, ObjectInputStream, ObjectOutputStream}
 import java.util.concurrent.{ThreadLocalRandom, TimeUnit}
 
 import agent.{BallFollower, PlayerInputProvider}
@@ -7,7 +8,7 @@ import data.Generation
 import grizzled.slf4j.Logging
 import misc.Persistent
 import mutation.NetworkCreator
-import neural.{NeuralNetwork, TraceException}
+import neural.{NeuralNetwork, TrainingProvider}
 import server.{GameProperties, GameState, PhysicsProperties}
 import ui.{SwingUI, UI}
 
@@ -27,7 +28,7 @@ object NEAT extends Logging {
     val networkName = train(
       //      Some(generation),
       None,
-      new BallFollower(30000L / 2),
+      () => new BallFollower(30000L / 2),
       updateOpponentWithBestNetwork = true
     )
     //train(
@@ -51,9 +52,9 @@ object NEAT extends Logging {
   }
 
   def train(initialGeneration: Option[Generation],
-            initialOpponent: PlayerInputProvider,
+            initialOpponent: () => PlayerInputProvider,
             updateOpponentWithBestNetwork: Boolean = false): String = {
-
+    val trainingProvider = new TrainingProvider(initialOpponent)
     val generationCount = 100
     val speciesCount = 20
     val networksPerSpecies = 20
@@ -67,7 +68,6 @@ object NEAT extends Logging {
       outputLayerCount
     ))
 
-    var opponent = initialOpponent
     for (i <- 0 until generationCount) {
       generation.evolve()
       generation.mutate(ThreadLocalRandom.current())
@@ -75,15 +75,8 @@ object NEAT extends Logging {
       logger.info(s"Starting generation $i/$generationCount.")
 
       generation.networks.par.foreach(neuralNetwork => {
-        println(s"Starting evaluation of NN ${System.identityHashCode(neuralNetwork)} on ${Thread.currentThread()}")
         val lInput = new NEATInputProvider(neuralNetwork)
-        try {
-          neuralNetwork.score = evaluate(lInput, opponent, showUI = false)
-        } catch {
-          case th: TraceException =>
-            logger.info(s"Found neuron in network ${System.identityHashCode(neuralNetwork)} on ${Thread.currentThread()}: ${th.stack.map(System.identityHashCode(_))} (secondary = ${th.secondary})")
-            throw new AssertionError()
-        }
+        neuralNetwork.score = evaluate(lInput, trainingProvider.provider, showUI = false)
       })
 
       val bestPrototypes = generation.getBestPrototypes
@@ -93,7 +86,20 @@ object NEAT extends Logging {
 
       // Update the best network.
       if (updateOpponentWithBestNetwork) {
-        opponent = new NEATInputProvider(generation.networks.sortBy(x => x.score).last)
+        val serializedBestNetwork = {
+          val bos = new ByteArrayOutputStream()
+          val oos = new ObjectOutputStream(bos)
+          oos.writeObject(generation.networks.sortBy(x => x.score).last)
+          oos.close()
+          bos.toByteArray
+        }
+
+        //Hacky way of doing things, but at least it won't share data
+        trainingProvider.setProvider(() => {
+          new NEATInputProvider(new ObjectInputStream(
+            new ByteArrayInputStream(serializedBestNetwork)
+          ).readObject().asInstanceOf[NeuralNetwork])
+        })
       }
 
       generation.breed(ThreadLocalRandom.current())

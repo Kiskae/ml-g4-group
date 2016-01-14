@@ -1,7 +1,5 @@
 package neural
 
-import java.util.concurrent.atomic.AtomicBoolean
-
 /**
   * Created by bas on 21-12-15.
   */
@@ -11,7 +9,6 @@ class Neuron(val layer: Int, val label: Int) extends Serializable {
   var value: Option[Double] = None
   private var cachedValue: Option[Double] = None
   private var calculating: Boolean = false
-  private val debugLock = new AtomicBoolean(false)
 
   /**
     * Return the value if set, otherwise evaluate this
@@ -19,28 +16,12 @@ class Neuron(val layer: Int, val label: Int) extends Serializable {
     */
   def evaluate(): Double = {
     value.orElse(cachedValue).getOrElse {
-      if (calculating && debugLock.compareAndSet(false, true)) {
-        println(s"Debug log set on thread ${Thread.currentThread()}")
-        throw TraceException(secondary = false, Neuron.this)
-      }
-
-      try {
-        assert(!calculating, s"evaluate loop on neuron ${System.identityHashCode(Neuron.this)} on thread ${Thread.currentThread()}")
-        calculating = true
-        val newVal = inputNeurons.map(n => n.other.evaluate() * n.weight).sum
-        calculating = false
-        cachedValue = Some(newVal)
-        newVal
-      } catch {
-        case th: TraceException => {
-          th.stack += Neuron.this
-          throw th
-        }
-      } finally {
-        if (debugLock.get()) {
-          throw TraceException(secondary = true, Neuron.this)
-        }
-      }
+      assert(!calculating, s"evaluate loop on neuron ${System.identityHashCode(Neuron.this)} on thread ${Thread.currentThread()}")
+      calculating = true
+      val newVal = inputNeurons.map(n => n.other.evaluate() * n.weight).sum
+      calculating = false
+      cachedValue = Some(newVal)
+      newVal
     }
   }
 

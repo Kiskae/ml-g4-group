@@ -3,7 +3,7 @@ package neat
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, ObjectInputStream, ObjectOutputStream}
 import java.util.concurrent.{ThreadLocalRandom, TimeUnit}
 
-import agent.{BallFollower, PlayerInputProvider}
+import agent.{PlayerInput, BallFollower, PlayerInputProvider}
 import data.Generation
 import grizzled.slf4j.Logging
 import misc.Persistent
@@ -11,6 +11,8 @@ import mutation.NetworkCreator
 import neural.{NeuralNetwork, TrainingProvider}
 import server.{GameProperties, GameState, PhysicsProperties}
 import ui.{SwingUI, UI}
+import math._
+import scala.collection.mutable
 
 /**
   * Created by David on 7-1-2016.
@@ -19,6 +21,7 @@ object NEAT extends Logging {
   val maxIdleSteps = 3000
   val cutOffScore = 5
   val processors = Runtime.getRuntime.availableProcessors()
+  val r = scala.util.Random
 
   def main(args: Array[String]): Unit = {
     logger.info("Starting NEAT!")
@@ -29,7 +32,7 @@ object NEAT extends Logging {
       //      Some(generation),
       None,
       () => new BallFollower(30000L / 2),
-      updateOpponentWithBestNetwork = true
+      updateOpponentWithBestNetwork = false
     )
     //train(
     // Some(Persistent.ReadObjectFromFile[Generation]("Generation-2015-12-28T20:57:21.obj"),
@@ -164,6 +167,61 @@ object NEAT extends Logging {
     ui.foreach(_.finish(s))
 
     (s.getMyScore - s.getOpponentScore) / stepCounter.toFloat * 1000
+  }
+
+  def evaluateRandomBallInits(lInput: PlayerInputProvider, showUI: Boolean) = {
+
+  }
+
+  override def run[SType](s: GameState, gameProps:GameProperties, physProps: PhysicsProperties, lInput: PlayerInputProvider) = {
+    val emptyInput = new PlayerInput(false, false, false)
+    val m = s.`match`
+    val histMaxSize = 1000000
+
+    do {
+      setupMatch(s, gameProps, physProps)
+      val setup = getSetup(s)
+      var crossNet = false
+      while ((!crossNet || m.ball.pCircle.posX <= 0) && !m.matchFinished && history.size < histMaxSize) {
+        crossNet |= m.ball.pCircle.posX <= 0
+        val stateNdx = qFunc.stateRepr(s)
+        val actionNdx = qAgent.policy(s)
+
+        val rInput = emptyInput
+
+        m.step(lInput, rInput)
+
+        val toInsert = (stateNdx, actionNdx)
+        if (history.isEmpty || history.last != toInsert) history += toInsert
+      }
+      if (history.size >= histMaxSize) {
+        println(s"setup:$setup hits:${s.lHits}")
+      }
+    } while ((s.lHits == 0 && s.rScore == 0) || history.size >= histMaxSize)
+
+    val reward = if (s.rScore > 0) -1 else 1
+
+    (reward, history)
+  }
+
+  def setupMatch(s:GameState, gameProps:GameProperties, physProps: PhysicsProperties) {
+    s.reset()
+    val ball = s.`match`.ball
+    val pc = ball.pCircle
+    pc.posX = gameProps.ballRadius + r.nextInt((gameProps.sideWidth-2*gameProps.ballRadius).toInt)
+    pc.posY = physProps.playerMaxHeight/4 + r.nextInt(3*physProps.playerMaxHeight.toInt/4)
+
+    val angle = r.nextDouble*Pi
+    pc.velY = round(physProps.playerCollisionVelocity*sin(angle))
+    pc.velX = round(physProps.playerCollisionVelocity*cos(angle))
+
+    s.`match`.lPlayer.pCircle.posX = -(gameProps.ballRadius + r.nextInt((gameProps.sideWidth-2*gameProps.ballRadius).toInt))
+    ball.firstHit = false
+  }
+
+  def getSetup(s:GameState) = {
+    val pc = s.`match`.ball.pCircle
+    (pc.posX,pc.posY,pc.velY,pc.velX,s.`match`.lPlayer.pCircle.posX)
   }
 
   private def uiWrapper(run: (GameState) => Unit, ui: UI): (GameState => Unit) = {

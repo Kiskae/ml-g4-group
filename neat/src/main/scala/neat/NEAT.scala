@@ -9,7 +9,7 @@ import grizzled.slf4j.Logging
 import misc.Persistent
 import mutation.NetworkCreator
 import neural.{NeuralNetwork, TrainingProvider}
-import server.{GameProperties, GameState, PhysicsProperties}
+import server.{Side, GameProperties, GameState, PhysicsProperties}
 import ui.{SwingUI, UI}
 import math._
 import scala.collection.mutable
@@ -20,6 +20,8 @@ import scala.collection.mutable
 object NEAT extends Logging {
   val maxIdleSteps = 3000
   val cutOffScore = 5
+  val initsPerEval = 50
+
   val processors = Runtime.getRuntime.availableProcessors()
   val r = scala.util.Random
 
@@ -58,9 +60,9 @@ object NEAT extends Logging {
             initialOpponent: () => PlayerInputProvider,
             updateOpponentWithBestNetwork: Boolean = false): String = {
     val trainingProvider = new TrainingProvider(initialOpponent)
-    val generationCount = 100
+    val generationCount = 200
     val speciesCount = 20
-    val networksPerSpecies = 20
+    val networksPerSpecies = 50
     val inputLayerCount = 6
     val outputLayerCount = 3
 
@@ -79,7 +81,8 @@ object NEAT extends Logging {
 
       generation.networks.par.foreach(neuralNetwork => {
         val lInput = new NEATInputProvider(neuralNetwork)
-        neuralNetwork.score = evaluate(lInput, trainingProvider.provider, showUI = false)
+//        neuralNetwork.score = evaluate(lInput, trainingProvider.provider, showUI = false)
+        neuralNetwork.score = evaluateRandomBallInits(lInput, showUI = false)
       })
 
       val bestPrototypes = generation.getBestPrototypes
@@ -170,38 +173,50 @@ object NEAT extends Logging {
   }
 
   def evaluateRandomBallInits(lInput: PlayerInputProvider, showUI: Boolean) = {
+    var score = 0
+    val gameProps = new GameProperties()
+    val physProps = new PhysicsProperties()
+    val s = new GameState(gameProps, physProps, lInput, null)
 
+    for(i <- 1 until initsPerEval){
+      score += run(s, gameProps, physProps, lInput)
+    }
+
+    score.toFloat
   }
 
-  override def run[SType](s: GameState, gameProps:GameProperties, physProps: PhysicsProperties, lInput: PlayerInputProvider) = {
+  def run[SType](s: GameState, gameProps:GameProperties, physProps: PhysicsProperties, lInput: PlayerInputProvider) = {
     val emptyInput = new PlayerInput(false, false, false)
     val m = s.`match`
     val histMaxSize = 1000000
+    var historyCount = 0
 
     do {
       setupMatch(s, gameProps, physProps)
       val setup = getSetup(s)
       var crossNet = false
-      while ((!crossNet || m.ball.pCircle.posX <= 0) && !m.matchFinished && history.size < histMaxSize) {
+      while ((!crossNet || m.ball.pCircle.posX <= 0) && !m.matchFinished && historyCount < histMaxSize) {
         crossNet |= m.ball.pCircle.posX <= 0
-        val stateNdx = qFunc.stateRepr(s)
-        val actionNdx = qAgent.policy(s)
+//        val stateNdx = qFunc.stateRepr(s)
+//        val actionNdx = qAgent.policy(s)
 
         val rInput = emptyInput
 
-        m.step(lInput, rInput)
+        m.step(lInput.getInput(s, Side.LEFT), rInput)
 
-        val toInsert = (stateNdx, actionNdx)
-        if (history.isEmpty || history.last != toInsert) history += toInsert
+//        val toInsert = (stateNdx, actionNdx)
+//        if (history.isEmpty || history.last != toInsert) history += toInsert
       }
-      if (history.size >= histMaxSize) {
+      if (historyCount >= histMaxSize) {
         println(s"setup:$setup hits:${s.lHits}")
       }
-    } while ((s.lHits == 0 && s.rScore == 0) || history.size >= histMaxSize)
+
+      historyCount += 1
+    } while ((s.lHits == 0 && s.rScore == 0) || historyCount >= histMaxSize)
 
     val reward = if (s.rScore > 0) -1 else 1
 
-    (reward, history)
+    reward
   }
 
   def setupMatch(s:GameState, gameProps:GameProperties, physProps: PhysicsProperties) {

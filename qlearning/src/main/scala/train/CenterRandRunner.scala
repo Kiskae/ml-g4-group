@@ -24,11 +24,12 @@ class CenterRandRunner(gameProps:GameProperties, physProps:PhysicsProperties) ex
     val history = mutable.ArrayBuffer[(SType,Int)]()
     val emptyInput = new PlayerInput(false, false, false)
     val m = s.`match`
+    val histMaxSize = 1000000
 
     do {
       history.clear()
       setupMatch(s)
-      while (m.ball.pCircle.posX <= 0 && !m.matchFinished) {
+      while (m.ball.pCircle.posX <= 0 && s.rScore == 0 && history.size < histMaxSize) {
         val stateNdx = qFunc.stateRepr(s)
         val actionNdx = qAgent.policy(s)
         val lInput = qfunc.QFunctionInputProvider.inputs(actionNdx)
@@ -40,7 +41,7 @@ class CenterRandRunner(gameProps:GameProperties, physProps:PhysicsProperties) ex
         val toInsert = (stateNdx, actionNdx)
         if (history.isEmpty || history.last != toInsert) history += toInsert
       }
-    } while (s.lHits == 0 && !m.matchFinished)
+    } while ((s.lHits == 0 && s.rScore == 0) || history.size >= histMaxSize)
 
     val reward = if (s.rScore > 0) -1 else 1
 

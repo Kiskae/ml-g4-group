@@ -7,15 +7,27 @@ class Neuron(val layer: Int, val label: Int) extends Serializable {
   private var inputNeurons: Seq[InputNeuron] = Seq()
   /** value is used for the input values. */
   var value: Option[Double] = None
+  private var cachedValue: Option[Double] = None
+  private var calculating: Boolean = false
 
   /**
     * Return the value if set, otherwise evaluate this
     * Neuron with the input neurons.
     */
-  def evaluate(depth: Int): Double = {
-    value.getOrElse {
-      inputNeurons.map(n => n.other.evaluate(depth + 1) * n.weight).sum
+  def evaluate(): Double = {
+    value.orElse(cachedValue).getOrElse {
+      assert(!calculating, s"evaluate loop on neuron ${System.identityHashCode(Neuron.this)} on thread ${Thread.currentThread()}")
+      calculating = true
+      val newVal = inputNeurons.map(n => n.other.evaluate() * n.weight).sum
+      calculating = false
+      cachedValue = Some(newVal)
+      newVal
     }
+  }
+
+  def resetCache() = {
+    cachedValue = None
+    calculating = false
   }
 
   def addInputNeuron(inputNeuron: Neuron, weight: Double, innovationNumber: Int) = {

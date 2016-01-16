@@ -1,13 +1,7 @@
-apply plugin: 'scala'
-apply plugin: 'application'
+apply plugin: 'java'
 
 allprojects {
     repositories {
         mavenCentral()
     }
-}
-
-dependencies {
-    compile project(':qlearning')
-    compile project(':neat')
 }

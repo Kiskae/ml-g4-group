@@ -21,8 +21,7 @@ class NEATInputProvider(val network: NeuralNetwork) extends AlwaysLeftInputProvi
     val playerVelY = gameStateInterface.getMe.getVelY / 15100.0
 
     //    println(s"Feeding input: ${ballX}, ${ballY}, ${playerX}, ${playerY}")
-    network.setInput(ballX, ballY, playerX, playerY, playerVelX, playerVelY)
-    network.evaluate
+    network.evaluate(ballX, ballY, playerX, playerY, playerVelX, playerVelY)
 
     val Seq(left, right, up) = network.getOutput
     //    println(s"Providing output: left = $left, right = $right, up = $up")

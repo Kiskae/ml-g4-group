@@ -8,7 +8,7 @@ import data.Generation
 import grizzled.slf4j.Logging
 import misc.Persistent
 import mutation.NetworkCreator
-import neural.{NeuralNetwork, TrainingProvider}
+import neural.{NeuralNetwork, Neuron, TrainingProvider}
 import server.{GameProperties, GameState, PhysicsProperties, Side}
 import ui.{SwingUI, UI}
 
@@ -29,7 +29,7 @@ object NEAT extends Logging {
     logger.info("Starting NEAT!")
 
     val networkName = train(
-      Some(Persistent.ReadObjectFromFile[Generation]("Generation-2016-01-16T12-42-02.obj")),
+      Some(Persistent.ReadObjectFromFile[Generation]("Generation-2016-01-17T17-50-30.obj")),
       () => new BallFollower(30000L / 2),
       updateOpponentWithBestNetwork = false
     )
@@ -65,6 +65,7 @@ object NEAT extends Logging {
     val outputLayerCount = 3
 
     initialGeneration.foreach(checkNeuronConsistency)
+    initialGeneration.foreach(Neuron.ensureUniqueNeurons)
 
     val generation = initialGeneration.getOrElse(NetworkCreator.generation(
       speciesCount,
@@ -90,6 +91,8 @@ object NEAT extends Logging {
         logger.info("Best prototypes: " + bestPrototypes)
         logger.info("Best prototypes.weights.length: " + bestPrototypes.map(_.getWeights.length))
         logger.info("Best prototypes.neurons.length: " + bestPrototypes.map(_.neurons.length))
+
+        logger.info(s"GRAPH: [${generation.networks.map(_.score).mkString(",")}]")
 
         // Update the best network.
         if (updateOpponentWithBestNetwork) {

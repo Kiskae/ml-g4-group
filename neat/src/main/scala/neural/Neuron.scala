@@ -2,6 +2,8 @@ package neural
 
 import java.util.concurrent.atomic.AtomicInteger
 
+import data.Generation
+
 /**
   * Created by bas on 21-12-15.
   */
@@ -82,6 +84,13 @@ class Neuron private(val label: Int, val layer: Int) extends Serializable {
 
 object Neuron {
   private val nodeSequence: AtomicInteger = new AtomicInteger(1)
+
+  def ensureUniqueNeurons(gen: Generation) = {
+    val highestLabel = gen.networks.flatMap(_.neurons).map(_.label).max
+    if (nodeSequence.get() <= highestLabel) {
+      nodeSequence.set(highestLabel + 1)
+    }
+  }
 
   private def calcLayer(layerA: Int, layerB: Int): Int = {
     layerA / 2 + layerB / 2 //Good enough for now

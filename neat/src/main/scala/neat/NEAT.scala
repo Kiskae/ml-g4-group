@@ -3,16 +3,16 @@ package neat
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, ObjectInputStream, ObjectOutputStream}
 import java.util.concurrent.{ThreadLocalRandom, TimeUnit}
 
-import agent.{PlayerInput, BallFollower, PlayerInputProvider}
+import agent.{BallFollower, PlayerInput, PlayerInputProvider}
 import data.Generation
 import grizzled.slf4j.Logging
 import misc.Persistent
 import mutation.NetworkCreator
 import neural.{NeuralNetwork, TrainingProvider}
-import server.{Side, GameProperties, GameState, PhysicsProperties}
+import server.{GameProperties, GameState, PhysicsProperties, Side}
 import ui.{SwingUI, UI}
-import math._
-import scala.collection.mutable
+
+import scala.math._
 
 /**
   * Created by David on 7-1-2016.
@@ -32,7 +32,7 @@ object NEAT extends Logging {
 
     val networkName = train(
       //      Some(generation),
-      None,
+      Some(Persistent.ReadObjectFromFile[Generation]("Generation-2016-01-16T12-42-02.obj")),
       () => new BallFollower(30000L / 2),
       updateOpponentWithBestNetwork = false
     )
@@ -73,44 +73,52 @@ object NEAT extends Logging {
       outputLayerCount
     ))
 
-    for (i <- 0 until generationCount) {
-      generation.evolve()
-      generation.mutate(ThreadLocalRandom.current())
+    try {
+      for (i <- 0 until generationCount) {
+        generation.evolve()
+        generation.mutate(ThreadLocalRandom.current())
 
-      logger.info(s"Starting generation $i/$generationCount.")
+        logger.info(s"Starting generation $i/$generationCount.")
 
-      generation.networks.par.foreach(neuralNetwork => {
-        val lInput = new NEATInputProvider(neuralNetwork)
-//        neuralNetwork.score = evaluate(lInput, trainingProvider.provider, showUI = false)
-        neuralNetwork.score = evaluateRandomBallInits(lInput, showUI = false)
-      })
+        generation.networks.par.foreach(neuralNetwork => {
+          val lInput = new NEATInputProvider(neuralNetwork)
+          //        neuralNetwork.score = evaluate(lInput, trainingProvider.provider, showUI = false)
+          neuralNetwork.score = evaluateRandomBallInits(lInput, showUI = false)
+        })
 
-      val bestPrototypes = generation.getBestPrototypes
-      logger.info("Best prototypes: " + bestPrototypes)
-      logger.info("Best prototypes.weights.length: " + bestPrototypes.map(_.getWeights.length))
-      logger.info("Best prototypes.neurons.length: " + bestPrototypes.map(_.neurons.length))
+        val bestPrototypes = generation.getBestPrototypes
+        logger.info("Best prototypes: " + bestPrototypes)
+        logger.info("Best prototypes.weights.length: " + bestPrototypes.map(_.getWeights.length))
+        logger.info("Best prototypes.neurons.length: " + bestPrototypes.map(_.neurons.length))
 
-      // Update the best network.
-      if (updateOpponentWithBestNetwork) {
-        val serializedBestNetwork = {
-          val bos = new ByteArrayOutputStream()
-          val oos = new ObjectOutputStream(bos)
-          oos.writeObject(generation.networks.sortBy(x => x.score).last)
-          oos.close()
-          bos.toByteArray
+        // Update the best network.
+        if (updateOpponentWithBestNetwork) {
+          val serializedBestNetwork = {
+            val bos = new ByteArrayOutputStream()
+            val oos = new ObjectOutputStream(bos)
+            oos.writeObject(generation.networks.sortBy(x => x.score).last)
+            oos.close()
+            bos.toByteArray
+          }
+
+          //Hacky way of doing things, but at least it won't share data
+          trainingProvider.setProvider(() => {
+            new NEATInputProvider(new ObjectInputStream(
+              new ByteArrayInputStream(serializedBestNetwork)
+            ).readObject().asInstanceOf[NeuralNetwork])
+          })
         }
 
-        //Hacky way of doing things, but at least it won't share data
-        trainingProvider.setProvider(() => {
-          new NEATInputProvider(new ObjectInputStream(
-            new ByteArrayInputStream(serializedBestNetwork)
-          ).readObject().asInstanceOf[NeuralNetwork])
-        })
+        generation.breed(ThreadLocalRandom.current())
+
+        // SharedNodeCheck.check[NeuralNetwork, Neuron](generation.networks, _.neurons)
       }
-
-      generation.breed(ThreadLocalRandom.current())
-
-      // SharedNodeCheck.check[NeuralNetwork, Neuron](generation.networks, _.neurons)
+    } catch {
+      case th: Exception =>
+        Persistent.WriteWithTimestamp({ ts => s"Generation-Exception-$ts.obj" }, { oos =>
+          oos.writeObject(generation)
+        })
+        throw th
     }
 
     // Store best network.
@@ -178,14 +186,14 @@ object NEAT extends Logging {
     val physProps = new PhysicsProperties()
     val s = new GameState(gameProps, physProps, lInput, null)
 
-    for(i <- 1 until initsPerEval){
+    for (i <- 1 until initsPerEval) {
       score += run(s, gameProps, physProps, lInput)
     }
 
     score.toFloat
   }
 
-  def run[SType](s: GameState, gameProps:GameProperties, physProps: PhysicsProperties, lInput: PlayerInputProvider) = {
+  def run[SType](s: GameState, gameProps: GameProperties, physProps: PhysicsProperties, lInput: PlayerInputProvider) = {
     val emptyInput = new PlayerInput(false, false, false)
     val m = s.`match`
     val histMaxSize = 1000000
@@ -197,15 +205,15 @@ object NEAT extends Logging {
       var crossNet = false
       while ((!crossNet || m.ball.pCircle.posX <= 0) && !m.matchFinished && historyCount < histMaxSize) {
         crossNet |= m.ball.pCircle.posX <= 0
-//        val stateNdx = qFunc.stateRepr(s)
-//        val actionNdx = qAgent.policy(s)
+        //        val stateNdx = qFunc.stateRepr(s)
+        //        val actionNdx = qAgent.policy(s)
 
         val rInput = emptyInput
 
         m.step(lInput.getInput(s, Side.LEFT), rInput)
 
-//        val toInsert = (stateNdx, actionNdx)
-//        if (history.isEmpty || history.last != toInsert) history += toInsert
+        //        val toInsert = (stateNdx, actionNdx)
+        //        if (history.isEmpty || history.last != toInsert) history += toInsert
       }
       if (historyCount >= histMaxSize) {
         println(s"setup:$setup hits:${s.lHits}")
@@ -219,24 +227,24 @@ object NEAT extends Logging {
     reward
   }
 
-  def setupMatch(s:GameState, gameProps:GameProperties, physProps: PhysicsProperties) {
+  def setupMatch(s: GameState, gameProps: GameProperties, physProps: PhysicsProperties) {
     s.reset()
     val ball = s.`match`.ball
     val pc = ball.pCircle
-    pc.posX = gameProps.ballRadius + r.nextInt((gameProps.sideWidth-2*gameProps.ballRadius).toInt)
-    pc.posY = physProps.playerMaxHeight/4 + r.nextInt(3*physProps.playerMaxHeight.toInt/4)
+    pc.posX = gameProps.ballRadius + r.nextInt((gameProps.sideWidth - 2 * gameProps.ballRadius).toInt)
+    pc.posY = physProps.playerMaxHeight / 4 + r.nextInt(3 * physProps.playerMaxHeight.toInt / 4)
 
-    val angle = r.nextDouble*Pi
-    pc.velY = round(physProps.playerCollisionVelocity*sin(angle))
-    pc.velX = round(physProps.playerCollisionVelocity*cos(angle))
+    val angle = r.nextDouble * Pi
+    pc.velY = round(physProps.playerCollisionVelocity * sin(angle))
+    pc.velX = round(physProps.playerCollisionVelocity * cos(angle))
 
-    s.`match`.lPlayer.pCircle.posX = -(gameProps.ballRadius + r.nextInt((gameProps.sideWidth-2*gameProps.ballRadius).toInt))
+    s.`match`.lPlayer.pCircle.posX = -(gameProps.ballRadius + r.nextInt((gameProps.sideWidth - 2 * gameProps.ballRadius).toInt))
     ball.firstHit = false
   }
 
-  def getSetup(s:GameState) = {
+  def getSetup(s: GameState) = {
     val pc = s.`match`.ball.pCircle
-    (pc.posX,pc.posY,pc.velY,pc.velX,s.`match`.lPlayer.pCircle.posX)
+    (pc.posX, pc.posY, pc.velY, pc.velX, s.`match`.lPlayer.pCircle.posX)
   }
 
   private def uiWrapper(run: (GameState) => Unit, ui: UI): (GameState => Unit) = {

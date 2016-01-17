@@ -9,6 +9,7 @@ object Runner {
     s.toLowerCase match {
       case "centerrand" => new CenterRandRunner(gameProps, physProps)
       case "rand" => new RandRunner(gameProps, physProps)
+      case "ballfollower" => new BallFollowerRunner(gameProps, physProps)
       case _ => throw new IllegalArgumentException()
     }
   }

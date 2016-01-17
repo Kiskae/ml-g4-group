@@ -5,10 +5,9 @@ import server.{GameStateInterface => State, GameProperties => GameProps, Physics
 import java.io.{PrintStream, File}
 import java.util.Scanner
 
-class QTable(gameProps:GameProps, physProps:PhysProps, alpha:Double = 0.1, fname:Option[String] = None) extends QFunction[Int] {
+class QTable(gameProps:GameProps, physProps:PhysProps, alpha:Double = 0.1) extends QFunction[Int] {
   //Initialize Q
-  val table = Array.ofDim[Double](30*10*3*3,6)
-  fname.map{name => loadFromFile(new File(name))}
+  lazy val table = Array.ofDim[Double](30*10*3*3,6)
 
   def mapX(x:Long) = 10+math.floor(x*10/(gameProps.sideWidth*2.0) min 19 max -10).toInt
   def mapY(y:Long) = (y*10/(gameProps.netHeight*3) min 9 max 0).toInt
@@ -32,14 +31,14 @@ class QTable(gameProps:GameProps, physProps:PhysProps, alpha:Double = 0.1, fname
     ndxAddDim(ndxAddDim(ndxAddDim(diffX,10,diffY),3,velY),3,velX)
   }
 
-  override def qRow(stateNdx: Int) = table(stateNdx)
+  override def qRowRepr(stateNdx: Int) = table(stateNdx)
 
-  override def update(stateNdx: Int, action: Int, newVal: Double) {
-    val row = qRow(stateNdx)
+  override def updateRepr(stateNdx: Int, action: Int, newVal: Double) {
+    val row = qRowRepr(stateNdx)
     row(action) = (1-alpha)*row(action) + alpha*newVal
   }
 
-  def writeToFile(file:File) {
+  override def writeToFile(file:File) {
     val stream = new PrintStream(file)
     table.foreach {row =>
       row.foreach(x => stream.print(f"$x%6f\t"))
@@ -48,7 +47,7 @@ class QTable(gameProps:GameProps, physProps:PhysProps, alpha:Double = 0.1, fname
     stream.close()
   }
 
-  def loadFromFile(file:File) {
+  override def loadFromFile(file:File) {
     val scanner = new Scanner(file)
     for (i <- 0 until table.length) {
       for (j <- 0 until table(i).length) {

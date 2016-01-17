@@ -1,3 +1,5 @@
+package common
+
 import java.util.AbstractList
 
 //TODO: This should probably conform to some interface... Seq? IndexedSeq?

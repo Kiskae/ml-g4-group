@@ -29,9 +29,7 @@ object NEAT extends Logging {
     logger.info("Starting NEAT!")
 
     val networkName = train(
-      //      Some(generation),
       Some(Persistent.ReadObjectFromFile[Generation]("Generation-2016-01-16T12-42-02.obj")),
-      //      None,
       () => new BallFollower(30000L / 2),
       updateOpponentWithBestNetwork = false
     )
@@ -65,6 +63,8 @@ object NEAT extends Logging {
     val networksPerSpecies = 50
     val inputLayerCount = 6
     val outputLayerCount = 3
+
+    initialGeneration.foreach(checkNeuronConsistency)
 
     val generation = initialGeneration.getOrElse(NetworkCreator.generation(
       speciesCount,
@@ -279,5 +279,22 @@ object NEAT extends Logging {
         sleepTime += framePeriod
       }
     }
+  }
+
+  def checkNeuronConsistency(gen: Generation): Unit = {
+    val inconsisent = gen.networks.flatMap(_.neurons).groupBy(_.label).map { neurons =>
+      //all neurons have the same label, so they must also have the same layer
+      val layers = neurons._2.map(_.layer).distinct
+      if (layers.length > 1) {
+        logger.warn(s"Label ${neurons._1} has more than 1 layer: $layers")
+        true
+      } else {
+        false
+      }
+    }.foldLeft(false) {
+      _ | _
+    }
+
+    assert(!inconsisent, "Generation is inconsistent")
   }
 }

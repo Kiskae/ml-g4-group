@@ -1,12 +1,15 @@
 package neural
 
+import java.util.concurrent.atomic.AtomicInteger
+
 /**
   * Created by bas on 21-12-15.
   */
-class Neuron(val layer: Int, val label: Int) extends Serializable {
+@SerialVersionUID(3987547790973292510L)
+class Neuron private(val label: Int, val layer: Int) extends Serializable {
   private var inputNeurons: Seq[InputNeuron] = Seq()
   /** value is used for the input values. */
-  var value: Option[Double] = None
+  private var value: Option[Double] = None
   private var cachedValue: Option[Double] = None
   private var calculating: Boolean = false
 
@@ -18,10 +21,13 @@ class Neuron(val layer: Int, val label: Int) extends Serializable {
     value.orElse(cachedValue).getOrElse {
       assert(!calculating, s"evaluate loop on neuron ${System.identityHashCode(Neuron.this)} on thread ${Thread.currentThread()}")
       calculating = true
-      val newVal = inputNeurons.map(n => n.other.evaluate() * n.weight).sum
-      calculating = false
-      cachedValue = Some(newVal)
-      newVal
+      try {
+        val newVal = inputNeurons.map(n => n.other.evaluate() * n.weight).sum
+        cachedValue = Some(newVal)
+        newVal
+      } finally {
+        calculating = false
+      }
     }
   }
 
@@ -71,4 +77,22 @@ class Neuron(val layer: Int, val label: Int) extends Serializable {
     label.hashCode()
   }
 
+  def copy(): Neuron = new Neuron(label = this.label, layer = this.layer)
+}
+
+object Neuron {
+  private val nodeSequence: AtomicInteger = new AtomicInteger(1)
+
+  private def calcLayer(layerA: Int, layerB: Int): Int = {
+    layerA / 2 + layerB / 2 //Good enough for now
+  }
+
+  def between(start: Neuron, end: Neuron): Neuron = new Neuron(
+    nodeSequence.getAndIncrement(),
+    calcLayer(start.layer, end.layer)
+  )
+
+  def staticSequence(layer: Int, len: Int, offset: Int = 0): Seq[Neuron] = {
+    (0 until len).map(i => new Neuron(-i - offset, layer)).toSeq
+  }
 }

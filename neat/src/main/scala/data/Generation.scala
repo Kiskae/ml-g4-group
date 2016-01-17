@@ -4,7 +4,7 @@ import java.util.concurrent.ThreadLocalRandom
 
 import misc.Probability
 import mutation.NetworkBreeder
-import neural.NeuralNetwork
+import neural.{NeuralNetwork, Neuron}
 
 import scala.collection.mutable
 import scala.util.Random
@@ -19,8 +19,8 @@ class Generation(var species: Seq[Species]) extends Serializable {
   def evolve() = {
     val r = ThreadLocalRandom.current()
 
-//    mutate(r)
-//    breed(r)
+    //    mutate(r)
+    //    breed(r)
 
     currentGeneration += 1
   }
@@ -28,10 +28,10 @@ class Generation(var species: Seq[Species]) extends Serializable {
   def mutate(r: Random) = {
     for (n <- networks) {
       if (Generation.newConnectionProbability.test(r)) {
-        val inputNeurons = n.getInputNeurons ++ n.hiddenNeurons
+        val inputNeurons = n.getInputNeurons ++ n.getHiddenNeurons
         var startNeuron = inputNeurons(r.nextInt(inputNeurons.length))
 
-        val outputNeurons = n.getOutputNeurons ++ n.hiddenNeurons
+        val outputNeurons = n.getOutputNeurons ++ n.getHiddenNeurons
         var endNeuron = outputNeurons(r.nextInt(outputNeurons.length))
 
         while (startNeuron.layer >= endNeuron.layer && !n.getOutputNeurons.contains(endNeuron)) {
@@ -50,7 +50,7 @@ class Generation(var species: Seq[Species]) extends Serializable {
 
         n.deleteConnection(connection)
 
-        val newNeuron = n.newNeuron(startNode.layer / 2 + endNode.layer / 2)
+        val newNeuron = Neuron.between(startNode, endNode)
         n.addHiddenNeuron(newNeuron)
 
         n.createConnection(startNode, newNeuron, weight)

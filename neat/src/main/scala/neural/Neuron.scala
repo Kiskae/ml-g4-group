@@ -31,7 +31,7 @@ class Neuron(val layer: Int, val label: Int) extends Serializable {
   }
 
   def addInputNeuron(inputNeuron: Neuron, weight: Double, innovationNumber: Int) = {
-    require(inputNeuron.layer < layer)
+    require(inputNeuron.layer < layer, s"$inputNeuron >= $this")
     inputNeurons = inputNeurons :+ InputNeuron(inputNeuron, weight, innovationNumber)
   }
 
@@ -53,7 +53,7 @@ class Neuron(val layer: Int, val label: Int) extends Serializable {
     inputNeurons = inputNeurons.filterNot(_.other.label == label)
   }
 
-  override def toString = s"Neuron($label,in=$getInputLabels)"
+  override def toString = s"Neuron($label,in=$getInputLabels,layer=$layer)"
 
   private case class InputNeuron(other: Neuron, weight: Double, innovation: Int)
 
@@ -70,4 +70,5 @@ class Neuron(val layer: Int, val label: Int) extends Serializable {
   override def hashCode(): Int = {
     label.hashCode()
   }
+
 }

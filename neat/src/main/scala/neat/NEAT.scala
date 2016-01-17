@@ -28,11 +28,10 @@ object NEAT extends Logging {
   def main(args: Array[String]): Unit = {
     logger.info("Starting NEAT!")
 
-    //    val generation = Persistent.ReadObjectFromFile[Generation]("Generation-2016-01-08T11-58-38.obj")
-
     val networkName = train(
       //      Some(generation),
       Some(Persistent.ReadObjectFromFile[Generation]("Generation-2016-01-16T12-42-02.obj")),
+      //      None,
       () => new BallFollower(30000L / 2),
       updateOpponentWithBestNetwork = false
     )
@@ -42,6 +41,7 @@ object NEAT extends Logging {
     // updateOpponentWithBestNetwork = true
     //)
 
+    //    val networkName = "Best-Network-2016-01-16T12-42-02.obj"
     logger.info(s"New network: $networkName, viewing")
     view(networkName)
     //view("Best-Network-2015-12-28T20:57:21.obj", Some("Best-Network-2015-12-28T20:57:21.obj"))
@@ -60,7 +60,7 @@ object NEAT extends Logging {
             initialOpponent: () => PlayerInputProvider,
             updateOpponentWithBestNetwork: Boolean = false): String = {
     val trainingProvider = new TrainingProvider(initialOpponent)
-    val generationCount = 200
+    val generationCount = 100
     val speciesCount = 20
     val networksPerSpecies = 50
     val inputLayerCount = 6
@@ -109,6 +109,10 @@ object NEAT extends Logging {
           })
         }
 
+        if (i % 100 == 0 && i != 0) {
+          storeGenerationAndNetwork(generation)
+        }
+
         generation.breed(ThreadLocalRandom.current())
 
         // SharedNodeCheck.check[NeuralNetwork, Neuron](generation.networks, _.neurons)
@@ -121,6 +125,14 @@ object NEAT extends Logging {
         throw th
     }
 
+    val bestNetwork = generation.networks.sortBy(x => x.score).last
+
+    logger.info("Best network.neurons.length: " + bestNetwork.neurons.length)
+
+    storeGenerationAndNetwork(generation)
+  }
+
+  def storeGenerationAndNetwork(generation: Generation): String = {
     // Store best network.
     val bestNetwork = generation.networks.sortBy(x => x.score).last
 

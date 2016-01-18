@@ -48,13 +48,16 @@ class Generation(var species: Seq[Species]) extends Serializable {
         val endNode = connection.end
         val weight = connection.weight
 
-        n.deleteConnection(connection)
+        if (startNode.layer + 1 < endNode.layer) {
 
-        val newNeuron = Neuron.between(startNode, endNode)
-        n.addHiddenNeuron(newNeuron)
+          n.deleteConnection(connection)
 
-        n.createConnection(startNode, newNeuron, weight)
-        n.createConnection(newNeuron, endNode, newConnectionWeight(r))
+          val newNeuron = Neuron.between(startNode, endNode)
+          n.addHiddenNeuron(newNeuron)
+
+          n.createConnection(startNode, newNeuron, weight)
+          n.createConnection(newNeuron, endNode, newConnectionWeight(r))
+        }
       }
 
       if (Generation.changeWeightProbability.test(r) && n.getConnections.nonEmpty) {

@@ -26,8 +26,8 @@ object NEAT extends Logging {
 
   val gameProps = new GameProperties
   val physProps = new PhysicsProperties
-  val resultsFile = new File("storage/results/Neat-vs-Ballfollower-v1.csv")
-  val resultsSpeciesFile = new File("storage/results/Neat-vs-Ballfollower-v1-species.csv")
+  val resultsFile = new File("storage/results/Neat-vs-randomBall-v1.csv")
+  val resultsSpeciesFile = new File("storage/results/Neat-vs-randomBall-v1-species.csv")
 
   def main(args: Array[String]): Unit = {
     gameProps.autoDropFrames = 1
@@ -36,7 +36,8 @@ object NEAT extends Logging {
     val qLearningOpponent = None // Uncomment for Qlearning: Some("storage/QTable.tsv/QTable.tsv")
 
     val networkName = train(
-      None, //Some(Persistent.ReadObjectFromFile[Generation]("Generation-Exception-2016-01-17T18-23-36.obj")),
+      None,
+//       Some(Persistent.ReadObjectFromFile[Generation]("Generation-Exception-2016-01-18T13-19-52.obj")),
 //      () => qLearningOpponent.map(loadQOpponent).getOrElse(new BallFollower(30000L / 2)),
       () => new BallFollower(30000L / 2),
       updateOpponentWithBestNetwork = false
@@ -86,9 +87,9 @@ object NEAT extends Logging {
     val speciesWriter = CSVWriter.open(resultsSpeciesFile)
 //    speciesWriter.writeRow(List("generation") :: List.fill(30)())
 
-    val generationCount = 400
+    val generationCount = 200
     val speciesCount = 30
-    val networksPerSpecies = 20
+    val networksPerSpecies = 40
     val inputLayerCount = 6
     val outputLayerCount = 3
 
@@ -113,6 +114,9 @@ object NEAT extends Logging {
           val lInput = new NEATInputProvider(neuralNetwork)
           neuralNetwork.score = evaluate(gameProps, physProps,
             lInput, trainingProvider.provider, showUI = false)
+
+          neuralNetwork.score = evaluateRandomBallInits(lInput, showUI = false)
+
         })
 
         val bestPrototypes = generation.getBestPrototypes
@@ -148,7 +152,7 @@ object NEAT extends Logging {
         speciesWriter.writeRow(generation.species.map(_.getBestNetwork.score))
 
         generation.breed(ThreadLocalRandom.current())
-
+        checkNeuronConsistency(generation)
         // SharedNodeCheck.check[NeuralNetwork, Neuron](generation.networks, _.neurons)
       }
 

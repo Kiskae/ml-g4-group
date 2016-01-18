@@ -9,6 +9,7 @@ import grizzled.slf4j.Logging
 import misc.Persistent
 import mutation.NetworkCreator
 import neural.{NeuralNetwork, Neuron, TrainingProvider}
+import qfunc.{QFunction, QFunctionInputProvider}
 import server.{GameProperties, GameState, PhysicsProperties, Side}
 import ui.{SwingUI, UI}
 
@@ -22,15 +23,18 @@ object NEAT extends Logging {
   val cutOffScore = 5
   val initsPerEval = 50
 
-  val processors = Runtime.getRuntime.availableProcessors()
-  val r = scala.util.Random
+  val gameProps = new GameProperties
+  val physProps = new PhysicsProperties
 
   def main(args: Array[String]): Unit = {
+    gameProps.autoDropFrames = 1
+
     logger.info("Starting NEAT!")
+    val qLearningOpponent = None // Uncomment for Qlearning: Some("storage/QTable.tsv/QTable.tsv")
 
     val networkName = train(
-      Some(Persistent.ReadObjectFromFile[Generation]("Generation-2016-01-17T17-50-30.obj")),
-      () => new BallFollower(30000L / 2),
+      None, //Some(Persistent.ReadObjectFromFile[Generation]("Generation-Exception-2016-01-17T18-23-36.obj")),
+      () => qLearningOpponent.map(loadQOpponent).getOrElse(new BallFollower(30000L / 2)),
       updateOpponentWithBestNetwork = false
     )
     //train(
@@ -41,26 +45,40 @@ object NEAT extends Logging {
 
     //    val networkName = "Best-Network-2016-01-16T12-42-02.obj"
     logger.info(s"New network: $networkName, viewing")
-    view(networkName)
+    view(networkName, opponent = qLearningOpponent.map(loadQOpponent))
     //view("Best-Network-2015-12-28T20:57:21.obj", Some("Best-Network-2015-12-28T20:57:21.obj"))
   }
 
-  def view(leftNetwork: String, rightNetwork: Option[String] = None) = {
+  private def loadQOpponent(fileName: String): PlayerInputProvider = {
+    new QFunctionInputProvider(QFunction(
+      gameProps,
+      physProps,
+      "abstable",
+      fileName
+    ), randChance = 0.0)
+  }
+
+  def view(leftNetwork: String,
+           rightNetwork: Option[String] = None,
+           opponent: Option[PlayerInputProvider] = None
+          ) = {
     val lInput = new NEATInputProvider(Persistent.ReadObjectFromFile[NeuralNetwork](leftNetwork))
     val rInput = rightNetwork
       .map(file => new NEATInputProvider(Persistent.ReadObjectFromFile[NeuralNetwork](file)))
+      .orElse(opponent)
       .getOrElse(new BallFollower(30000L / 2))
 
-    evaluate(lInput, rInput, showUI = true)
+    evaluate(gameProps, physProps, lInput, rInput, showUI = true)
   }
 
   def train(initialGeneration: Option[Generation],
             initialOpponent: () => PlayerInputProvider,
             updateOpponentWithBestNetwork: Boolean = false): String = {
     val trainingProvider = new TrainingProvider(initialOpponent)
-    val generationCount = 100
-    val speciesCount = 20
-    val networksPerSpecies = 50
+
+    val generationCount = 500
+    val speciesCount = 30
+    val networksPerSpecies = 20
     val inputLayerCount = 6
     val outputLayerCount = 3
 
@@ -83,8 +101,8 @@ object NEAT extends Logging {
 
         generation.networks.par.foreach(neuralNetwork => {
           val lInput = new NEATInputProvider(neuralNetwork)
-          //        neuralNetwork.score = evaluate(lInput, trainingProvider.provider, showUI = false)
-          neuralNetwork.score = evaluateRandomBallInits(lInput, showUI = false)
+          neuralNetwork.score = evaluate(gameProps, physProps,
+            lInput, trainingProvider.provider, showUI = false)
         })
 
         val bestPrototypes = generation.getBestPrototypes
@@ -155,9 +173,11 @@ object NEAT extends Logging {
     networkName
   }
 
-  def evaluate(lInput: PlayerInputProvider, rInput: PlayerInputProvider, showUI: Boolean) = {
-    val gameProps = new GameProperties()
-    val physProps = new PhysicsProperties()
+  def evaluate(gameProps: GameProperties,
+               physProps: PhysicsProperties,
+               lInput: PlayerInputProvider,
+               rInput: PlayerInputProvider,
+               showUI: Boolean) = {
     val s = new GameState(gameProps, physProps, lInput, rInput)
     val ui: Option[UI] = if (showUI) Some(new SwingUI(gameProps)) else None
 
@@ -244,6 +264,7 @@ object NEAT extends Logging {
 
   def setupMatch(s: GameState, gameProps: GameProperties, physProps: PhysicsProperties) {
     s.reset()
+    val r = ThreadLocalRandom.current()
     val ball = s.`match`.ball
     val pc = ball.pCircle
     pc.posX = gameProps.ballRadius + r.nextInt((gameProps.sideWidth - 2 * gameProps.ballRadius).toInt)

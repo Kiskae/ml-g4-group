@@ -49,9 +49,10 @@ class QTable(gameProps:GameProps, physProps:PhysProps, alpha:Double = 0.1) exten
 
   override def loadFromFile(file:File) {
     val scanner = new Scanner(file)
-    for (i <- 0 until table.length) {
-      for (j <- 0 until table(i).length) {
-        table(i)(j) = scanner.nextDouble
+    for (i <- table.indices) {
+      val values = scanner.nextLine().trim().split("\t").map(_.toDouble)
+      for (j <- table(i).indices) {
+        table(i)(j) = values(j)
       }
     }
     scanner.close()

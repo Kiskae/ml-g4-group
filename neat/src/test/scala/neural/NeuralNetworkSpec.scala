@@ -5,11 +5,9 @@ import org.scalatest.{FlatSpec, Matchers}
 class NeuralNetworkSpec extends FlatSpec with Matchers {
 
   def fixture = new {
-    val network = new NeuralNetwork
-    val x1 = network.newNeuron(0)
-    val x2 = network.newNeuron(0)
-    val b = network.newNeuron(0)
-    val out = network.newNeuron(2)
+    val network = new NeuralNetwork(3, 1)
+    val Seq(x1, x2, b) = network.getInputNeurons
+    val out = network.getOutputNeurons.head
 
     network.setInputNeurons(Seq(x1, x2, b))
     network.setOutputNeurons(Seq(out))
@@ -33,7 +31,7 @@ class NeuralNetworkSpec extends FlatSpec with Matchers {
 
   it should "do something, What is the expected outcome bas?" in {
     val fix = fixture
-    val hn = fix.network.newNeuron(1)
+    val hn = Neuron.between(fix.x1, fix.out)
     fix.network.addHiddenNeuron(hn)
 
     fix.network.createConnection(fix.x1, hn, -1.0)

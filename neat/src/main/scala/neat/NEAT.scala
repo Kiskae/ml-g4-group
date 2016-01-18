@@ -1,9 +1,10 @@
 package neat
 
-import java.io.{ByteArrayInputStream, ByteArrayOutputStream, ObjectInputStream, ObjectOutputStream}
+import java.io._
 import java.util.concurrent.{ThreadLocalRandom, TimeUnit}
 
 import agent.{BallFollower, PlayerInput, PlayerInputProvider}
+import com.github.tototoshi.csv.CSVWriter
 import data.Generation
 import grizzled.slf4j.Logging
 import misc.Persistent
@@ -25,6 +26,8 @@ object NEAT extends Logging {
 
   val gameProps = new GameProperties
   val physProps = new PhysicsProperties
+  val resultsFile = new File("storage/results/Neat-vs-Ballfollower-v1.csv")
+  val resultsSpeciesFile = new File("storage/results/Neat-vs-Ballfollower-v1-species.csv")
 
   def main(args: Array[String]): Unit = {
     gameProps.autoDropFrames = 1
@@ -34,7 +37,8 @@ object NEAT extends Logging {
 
     val networkName = train(
       None, //Some(Persistent.ReadObjectFromFile[Generation]("Generation-Exception-2016-01-17T18-23-36.obj")),
-      () => qLearningOpponent.map(loadQOpponent).getOrElse(new BallFollower(30000L / 2)),
+//      () => qLearningOpponent.map(loadQOpponent).getOrElse(new BallFollower(30000L / 2)),
+      () => new BallFollower(30000L / 2),
       updateOpponentWithBestNetwork = false
     )
     //train(
@@ -76,7 +80,13 @@ object NEAT extends Logging {
             updateOpponentWithBestNetwork: Boolean = false): String = {
     val trainingProvider = new TrainingProvider(initialOpponent)
 
-    val generationCount = 500
+    val writer = CSVWriter.open(resultsFile)
+    writer.writeRow(List("generation", "highest score", "lowest score", "average score"))
+
+    val speciesWriter = CSVWriter.open(resultsSpeciesFile)
+//    speciesWriter.writeRow(List("generation") :: List.fill(30)())
+
+    val generationCount = 400
     val speciesCount = 30
     val networksPerSpecies = 20
     val inputLayerCount = 6
@@ -134,10 +144,16 @@ object NEAT extends Logging {
           storeGenerationAndNetwork(generation)
         }
 
+        writer.writeRow(List(i, generation.highestScore, generation.lowestScore, generation.averageScore))
+        speciesWriter.writeRow(generation.species.map(_.getBestNetwork.score))
+
         generation.breed(ThreadLocalRandom.current())
 
         // SharedNodeCheck.check[NeuralNetwork, Neuron](generation.networks, _.neurons)
       }
+
+      writer.close
+      speciesWriter.close
     } catch {
       case th: Exception =>
         Persistent.WriteWithTimestamp({ ts => s"Generation-Exception-$ts.obj" }, { oos =>

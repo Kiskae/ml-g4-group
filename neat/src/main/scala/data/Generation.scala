@@ -122,6 +122,18 @@ class Generation(var species: Seq[Species]) extends Serializable {
   def getBestPrototypes: Seq[NeuralNetwork] = {
     species.map(_.getBestNetwork)
   }
+
+  def highestScore = {
+    networks.sortBy(x => x.score).last.score
+  }
+
+  def lowestScore = {
+    networks.sortBy(x => x.score).head.score
+  }
+
+  def averageScore = {
+    networks.map(_.score).sum / networks.length.toDouble
+  }
 }
 
 object Generation {

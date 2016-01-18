@@ -28,7 +28,7 @@ class ServeRunner(gameProps:GameProperties, physProps:PhysicsProperties) extends
         val actionNdx = qAgent.policy(s)
         val lInput = qfunc.QFunctionInputProvider.inputs(actionNdx)
 
-        val rInput = bAgent.getInput(s,Side.RIGHT)
+        val rInput = emptyInput
 
         m.step(lInput, rInput)
 

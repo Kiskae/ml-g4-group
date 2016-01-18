@@ -10,6 +10,8 @@ object Runner {
       case "centerrand" => new CenterRandRunner(gameProps, physProps)
       case "rand" => new RandRunner(gameProps, physProps)
       case "ballfollower" => new BallFollowerRunner(gameProps, physProps)
+      case "serve" => new ServeRunner(gameProps, physProps)
+      case "composite" => new CompositeRunner(new ServeRunner(gameProps, physProps), new RandRunner(gameProps, physProps), 0.1)
       case _ => throw new IllegalArgumentException()
     }
   }

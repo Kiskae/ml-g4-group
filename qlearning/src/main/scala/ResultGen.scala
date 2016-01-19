@@ -1,5 +1,4 @@
-import java.io.File
-
+import java.io.{PrintStream, File}
 import server._
 import agent._
 import qfunc._
@@ -15,6 +14,7 @@ object ResultGen extends App {
 
   def getAgents(largeDir:File):Array[PlayerInputProvider] = {
     val absolute = largeDir.getName.startsWith("abs")
+    println(largeDir.getName)
     largeDir.listFiles.map(f => Try(getAgent(f,absolute))).filter(_.isSuccess).map(_.get)
   }
 
@@ -63,7 +63,9 @@ object ResultGen extends App {
   val agents = files.map(getAgents(_))
   println(agents.map(_.size).sum)
 
-  case class Trainer(qtable:String, runner:String, trainer:String)
+  println("Finished agents")
+
+  case class Trainer(ndx:Int, qtable:String, runner:String, trainer:String)
   case class Agent(trainer:Trainer, runNumber:Int, provider:PlayerInputProvider)
   case class Match(server:Agent, reciever:Agent, serverWon:Boolean)
 
@@ -74,11 +76,10 @@ object ResultGen extends App {
  
   for (i <- 0 until agents.size) {
     val name = agentNames(i).split("_")
-    val trainer = Trainer(name(0),name(1),name(2))
+    val trainer = Trainer(i, name(0),name(1),name(2))
     trainers += trainer
     for (j <- 0 until agents(i).size) {
-      val agent = Agent(trainer, j+1, agent(i)(j))
-      agentsC += agent
+      agentsC += Agent(trainer, j+1, agents(i)(j))
     }
   }
 
@@ -87,23 +88,39 @@ object ResultGen extends App {
       results += Match(i, j, matchup(i.provider, j.provider))
     }
   }
+  println("Finished results")
 
-
-  val results = Array.ofDim[(Int,Int)](agents.size,agents.size)
-
-  for (i <- 0 until agents.size) {
-    for (j <- 0 until agents.size) {
-    //for (j <- i+1 until agents.size) {
-      val (score, matches) = matchup(agents(i),agents(j))
-      results(i)(j) = (score, matches)
-      //results(j)(i) = (matches-score, matches)
-    }
+  val tOut = new PrintStream(new File("trainers.csv"))
+  tOut.println("ndx,qType,runType,trainType")
+  for (t <- trainers) {
+    tOut.println(s"${t.ndx},${t.qtable},${t.runner},${t.trainer}")
   }
+  tOut.close()
 
-  for (i <- 0 until agents.size) {
-    print(agentNames(i)+"\t")
-    print(results(i).map(_ match {case (a,b) => a.toDouble/b}).sum/agents.size)
-    print("\t"+results(i).mkString("\t"))
-    println()
+  val rOut = new PrintStream(new File("results.csv"))
+  rOut.println("serveTrainNdx,serveSubNdx,recieverTrainNdx,recieverSubNdx,serverWon")
+  for (result <- results) {
+    rOut.print(s"${result.server.trainer.ndx},${result.server.runNumber},")
+    rOut.print(s"${result.reciever.trainer.ndx},${result.reciever.runNumber},")
+    rOut.println(if (result.serverWon) 1 else 0)
   }
+  rOut.close()
+
+  //val results = Array.ofDim[(Int,Int)](agents.size,agents.size)
+
+  //for (i <- 0 until agents.size) {
+  //  for (j <- 0 until agents.size) {
+  //  //for (j <- i+1 until agents.size) {
+  //    val (score, matches) = matchup(agents(i),agents(j))
+  //    results(i)(j) = (score, matches)
+  //    //results(j)(i) = (matches-score, matches)
+  //  }
+  //}
+
+  //for (i <- 0 until agents.size) {
+  //  print(agentNames(i)+"\t")
+  //  print(results(i).map(_ match {case (a,b) => a.toDouble/b}).sum/agents.size)
+  //  print("\t"+results(i).mkString("\t"))
+  //  println()
+  //}
 }

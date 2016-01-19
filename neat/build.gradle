@@ -17,7 +17,6 @@ dependencies {
     compile group: "org.slf4j", name: "slf4j-simple", version: "1.7.5"
     compile group: "com.github.tototoshi", name: "scala-csv_2.11", version: "1.2.2"
 
-
     compile project(":qlearning")
 
     testCompile group: "org.scalatest", name: "scalatest_2.11", version: "2.2.4"

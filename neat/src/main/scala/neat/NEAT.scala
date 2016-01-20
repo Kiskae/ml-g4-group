@@ -290,7 +290,7 @@ object NEAT extends Logging {
     pc.posX = gameProps.ballRadius + r.nextInt((gameProps.sideWidth - 2 * gameProps.ballRadius).toInt)
     pc.posY = physProps.playerMaxHeight / 4 + r.nextInt(3 * physProps.playerMaxHeight.toInt / 4)
 
-    val angle = r.nextDouble * Pi
+    val angle = r.nextDouble(1) * Pi
     pc.velY = round(physProps.playerCollisionVelocity * sin(angle))
     pc.velX = round(physProps.playerCollisionVelocity * cos(angle))
 

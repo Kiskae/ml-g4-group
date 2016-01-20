@@ -30,6 +30,7 @@ object NetworkBreeder {
           }
         case (Some(c1), None) => buildConnection(offspring, c1)
         case (None, Some(c2)) => buildConnection(offspring, c2)
+        case (None, None) => throw new AssertionError(s"Innovation: $innovationNumber")
       }
     }
 
@@ -41,6 +42,6 @@ object NetworkBreeder {
   }
 
   def recreate(layer: Int, neurons: Seq[Neuron]): Seq[Neuron] = {
-    neurons.map(n => new Neuron(layer, n.label))
+    neurons.map(n => n.copy())
   }
 }

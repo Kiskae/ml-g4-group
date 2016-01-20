@@ -16,4 +16,5 @@ task fatJar(type: Jar) {
 dependencies {
     compile project(':qlearning')
     compile project(':neat')
+    compile 'org.encog:encog-core:3.3.0'
 }

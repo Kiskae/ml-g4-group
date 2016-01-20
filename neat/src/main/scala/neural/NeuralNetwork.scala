@@ -7,26 +7,15 @@ import data.InnovationPool
 import scala.collection.mutable.ArrayBuffer
 import scala.util.Random
 
+@SerialVersionUID(3096133326619037005L)
 class NeuralNetwork(neuronsInCount: Int = 0, neuronsOutCount: Int = 0) extends Serializable {
-  var hiddenNeurons = new ArrayBuffer[Neuron]
-  private var inputNeurons = neuronSeq(0, neuronsInCount)
-  private var outputNeurons = neuronSeq(Int.MaxValue, neuronsOutCount, neuronsInCount)
+  private var hiddenNeurons = new ArrayBuffer[Neuron]
+  private var inputNeurons = Neuron.staticSequence(0, neuronsInCount)
+  private var outputNeurons = Neuron.staticSequence(Int.MaxValue, neuronsOutCount, neuronsInCount)
   private var connections: IndexedSeq[NeuralNetwork.Connection] = IndexedSeq()
   private var output: Option[Seq[Double]] = None
   var score = 0.0
   private val evalLock = new ReentrantLock()
-
-  def newNeuron(layer: Int): Neuron = new Neuron(layer, getNextLabelAndIncrement)
-
-  private def neuronSeq(layer: Int, length: Int, offset: Int = 0): Seq[Neuron] = {
-    (0 until length).map(i => new Neuron(layer, -i - offset)).toSeq
-  }
-
-  private def getNextLabelAndIncrement = {
-    val t = NeuralNetwork.nodeSequence
-    NeuralNetwork.nodeSequence += 1
-    t
-  }
 
   /**
     * If the neurons don't yet exist in the network, add them.
@@ -126,7 +115,7 @@ class NeuralNetwork(neuronsInCount: Int = 0, neuronsOutCount: Int = 0) extends S
 
   def ensureHiddenNeurons(neurons: Seq[Neuron]) = {
     val toAdd: Set[Neuron] = neurons.toSet -- hiddenNeurons
-    toAdd.foreach(n => this.addHiddenNeuron(new Neuron(n.layer, n.label)))
+    toAdd.foreach(n => this.addHiddenNeuron(n.copy()))
   }
 
   def deleteRandomConnection(rand: Random): Any = {
@@ -152,7 +141,6 @@ class NeuralNetwork(neuronsInCount: Int = 0, neuronsOutCount: Int = 0) extends S
 }
 
 object NeuralNetwork {
-  private var nodeSequence = 1
 
   case class Connection(start: Neuron, end: Neuron, var weight: Double, innovation: Int)
 

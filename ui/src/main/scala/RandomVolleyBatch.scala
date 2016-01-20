@@ -3,7 +3,7 @@ import agent._
 import ui.SwingUI
 import qfunc._
 
-object VolleyUI extends App {
+object RandomVolleyBatch extends App {
   def getAgent(agentType:String, arg:String) = {
     agentType.toLowerCase match {
       case "qagent" => new QFunctionInputProvider(QFunction(gameProps,physProps,"table",arg),randChance=0.0)
@@ -15,7 +15,7 @@ object VolleyUI extends App {
     }
   }
 
-  require(args.length == 4, "4 required arguments. Usage: <lAgentType> <lAgentArg> <rAgentType> <rAgentArg>")
+  require(args.length == 4 || args.length == 5, "4 required arguments. Usage: <lAgentType> <lAgentArg> <rAgentType> <rAgentArg> [pointsToWin=21]")
 
   val gameProps:GameProperties = new GameProperties()
   val physProps:PhysicsProperties = new PhysicsProperties()
@@ -23,16 +23,16 @@ object VolleyUI extends App {
 
   val lAgent = getAgent(args(0),args(1))
   val rAgent = getAgent(args(2),args(3))
+  val pointsToWin = if (args.length == 4) 21 else args(4).toInt
 
-  val game = new GameState(gameProps, physProps, lAgent, rAgent)
+  val game = new RandomInitGameState(gameProps, physProps, lAgent, rAgent)
 
-  //val pc = game.`match`.ball.pCircle
-  //pc.posX=239279
-  //pc.posY=210710
-  //pc.velY=5016
-  //pc.velX=14243
-  //game.`match`.lPlayer.pCircle.posX = -156666
-
-  new GameLoop(60, ui, game).run()
+  while (true) {
+    while (game.lScore < pointsToWin && game.rScore < pointsToWin) {
+      game.step()
+    }
+    println(f"${game.lScore}%-3d - ${game.rScore}%3d")
+    game.reset()
+  }
 
 }  

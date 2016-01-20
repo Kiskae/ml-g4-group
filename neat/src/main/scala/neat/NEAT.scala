@@ -26,8 +26,8 @@ object NEAT extends Logging {
 
   val gameProps = new GameProperties
   val physProps = new PhysicsProperties
-  val resultsFile = new File("storage/results/Neat-vs-randomBall-v1.csv")
-  val resultsSpeciesFile = new File("storage/results/Neat-vs-randomBall-v1-species.csv")
+  val resultsFile = new File("storage/results/Neat-vs-BF-Extra-Data.csv")
+  val resultsSpeciesFile = new File("storage/results/Neat-vs-BF-Extra-Data.csv")
 
   def main(args: Array[String]): Unit = {
     gameProps.autoDropFrames = 1
@@ -37,9 +37,8 @@ object NEAT extends Logging {
 
     val networkName = train(
       None,
-//       Some(Persistent.ReadObjectFromFile[Generation]("Generation-Exception-2016-01-18T13-19-52.obj")),
-//      () => qLearningOpponent.map(loadQOpponent).getOrElse(new BallFollower(30000L / 2)),
-      () => new BallFollower(30000L / 2),
+      //       Some(Persistent.ReadObjectFromFile[Generation]("Generation-Exception-2016-01-18T13-19-52.obj")),
+      () => qLearningOpponent.map(loadQOpponent).getOrElse(new BallFollower(30000L / 2)),
       updateOpponentWithBestNetwork = false
     )
     //train(
@@ -78,16 +77,22 @@ object NEAT extends Logging {
 
   def train(initialGeneration: Option[Generation],
             initialOpponent: () => PlayerInputProvider,
-            updateOpponentWithBestNetwork: Boolean = false): String = {
+            updateOpponentWithBestNetwork: Boolean = false,
+            randomize: Boolean = false): String = {
     val trainingProvider = new TrainingProvider(initialOpponent)
 
     val writer = CSVWriter.open(resultsFile)
-    writer.writeRow(List("generation", "highest score", "lowest score", "average score"))
+    writer.writeRow(List(
+      "generation",
+      "highest score", "lowest score", "average score",
+      "highest no. of neurons", "lowest no. of neurons", "average no. of neurons",
+      "highest no. of connections", "lowest no. of connections", "average no. of connections"
+    ))
 
-    val speciesWriter = CSVWriter.open(resultsSpeciesFile)
-//    speciesWriter.writeRow(List("generation") :: List.fill(30)())
+    //val speciesWriter = CSVWriter.open(resultsSpeciesFile)
+    //    speciesWriter.writeRow(List("generation") :: List.fill(30)())
 
-    val generationCount = 200
+    val generationCount = 100
     val speciesCount = 30
     val networksPerSpecies = 40
     val inputLayerCount = 6
@@ -112,19 +117,19 @@ object NEAT extends Logging {
 
         generation.networks.par.foreach(neuralNetwork => {
           val lInput = new NEATInputProvider(neuralNetwork)
-          neuralNetwork.score = evaluate(gameProps, physProps,
-            lInput, trainingProvider.provider, showUI = false)
 
-          neuralNetwork.score = evaluateRandomBallInits(lInput, showUI = false)
-
+          if (randomize) {
+            neuralNetwork.score = evaluateRandomBallInits(lInput, showUI = false)
+          } else {
+            neuralNetwork.score = evaluate(gameProps, physProps,
+              lInput, trainingProvider.provider, showUI = false)
+          }
         })
 
         val bestPrototypes = generation.getBestPrototypes
         logger.info("Best prototypes: " + bestPrototypes)
         logger.info("Best prototypes.weights.length: " + bestPrototypes.map(_.getWeights.length))
         logger.info("Best prototypes.neurons.length: " + bestPrototypes.map(_.neurons.length))
-
-        logger.info(s"GRAPH: [${generation.networks.map(_.score).mkString(",")}]")
 
         // Update the best network.
         if (updateOpponentWithBestNetwork) {
@@ -148,8 +153,16 @@ object NEAT extends Logging {
           storeGenerationAndNetwork(generation)
         }
 
-        writer.writeRow(List(i, generation.highestScore, generation.lowestScore, generation.averageScore))
-        speciesWriter.writeRow(generation.species.map(_.getBestNetwork.score))
+        val neuronCounts = generation.networks.map(_.neurons.length)
+        val connectionCounts = generation.networks.map(_.getConnections.length)
+
+        writer.writeRow(List(
+          i,
+          generation.highestScore, generation.lowestScore, generation.averageScore,
+          neuronCounts.max, neuronCounts.min, neuronCounts.sum / neuronCounts.length.toDouble,
+          connectionCounts.max, connectionCounts.min, connectionCounts.sum / connectionCounts.length.toDouble
+        ))
+        //speciesWriter.writeRow(generation.species.map(_.getBestNetwork.score))
 
         generation.breed(ThreadLocalRandom.current())
         checkNeuronConsistency(generation)
@@ -157,7 +170,7 @@ object NEAT extends Logging {
       }
 
       writer.close
-      speciesWriter.close
+      //speciesWriter.close
     } catch {
       case th: Exception =>
         Persistent.WriteWithTimestamp({ ts => s"Generation-Exception-$ts.obj" }, { oos =>
@@ -251,7 +264,7 @@ object NEAT extends Logging {
   def run[SType](s: GameState, gameProps: GameProperties, physProps: PhysicsProperties, lInput: PlayerInputProvider) = {
     val emptyInput = new PlayerInput(false, false, false)
     val m = s.`match`
-    val histMaxSize = 1000000
+    val histMaxSize = 1000
     var historyCount = 0
 
     do {
@@ -290,7 +303,7 @@ object NEAT extends Logging {
     pc.posX = gameProps.ballRadius + r.nextInt((gameProps.sideWidth - 2 * gameProps.ballRadius).toInt)
     pc.posY = physProps.playerMaxHeight / 4 + r.nextInt(3 * physProps.playerMaxHeight.toInt / 4)
 
-    val angle = r.nextDouble * Pi
+    val angle = r.nextDouble(1) * Pi
     pc.velY = round(physProps.playerCollisionVelocity * sin(angle))
     pc.velX = round(physProps.playerCollisionVelocity * cos(angle))
 

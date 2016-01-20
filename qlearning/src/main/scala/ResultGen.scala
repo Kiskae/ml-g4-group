@@ -21,6 +21,10 @@ object ResultGen extends App {
   // Does player l beat player r?
   def matchup(l:PlayerInputProvider, r:PlayerInputProvider):Boolean = {
     state.reset()
+    val ball = state.`match`.ball
+    ball.pCircle.posX = gameProps.ballRadius + rand.nextInt((gameProps.sideWidth-2*gameProps.ballRadius).toInt)
+    if (ball.side == Side.LEFT) ball.pCircle.posX *= -1
+
     var numSteps = 0
     val maxSteps = 1000000
 
@@ -53,6 +57,7 @@ object ResultGen extends App {
   require(args.length == 1, "Must take one arg: <runDir>")
   val runDir = new File(args(0))
   val files = runDir.listFiles
+  val rand = scala.util.Random
 
   val gameProps = new GameProperties()
   val physProps = new PhysicsProperties()
@@ -85,7 +90,9 @@ object ResultGen extends App {
 
   for (i <- agentsC) {
     for (j <- agentsC) {
-      results += Match(i, j, matchup(i.provider, j.provider))
+      for (_ <- 0 until 1000) {
+        results += Match(i, j, matchup(i.provider, j.provider))
+      }
     }
   }
   println("Finished results")
@@ -97,30 +104,12 @@ object ResultGen extends App {
   }
   tOut.close()
 
-  val rOut = new PrintStream(new File("results.csv"))
+  val rOut = new PrintStream(new File("results.tsv"))
   rOut.println("serveTrainNdx,serveSubNdx,recieverTrainNdx,recieverSubNdx,serverWon")
   for (result <- results) {
-    rOut.print(s"${result.server.trainer.ndx},${result.server.runNumber},")
-    rOut.print(s"${result.reciever.trainer.ndx},${result.reciever.runNumber},")
+    rOut.print(s"${result.server.trainer.ndx}\t${result.server.runNumber}\t")
+    rOut.print(s"${result.reciever.trainer.ndx}\t${result.reciever.runNumber}\t")
     rOut.println(if (result.serverWon) 1 else 0)
   }
   rOut.close()
-
-  //val results = Array.ofDim[(Int,Int)](agents.size,agents.size)
-
-  //for (i <- 0 until agents.size) {
-  //  for (j <- 0 until agents.size) {
-  //  //for (j <- i+1 until agents.size) {
-  //    val (score, matches) = matchup(agents(i),agents(j))
-  //    results(i)(j) = (score, matches)
-  //    //results(j)(i) = (matches-score, matches)
-  //  }
-  //}
-
-  //for (i <- 0 until agents.size) {
-  //  print(agentNames(i)+"\t")
-  //  print(results(i).map(_ match {case (a,b) => a.toDouble/b}).sum/agents.size)
-  //  print("\t"+results(i).mkString("\t"))
-  //  println()
-  //}
 }

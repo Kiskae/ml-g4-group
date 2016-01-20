@@ -12,6 +12,7 @@ object Runner {
       case "ballfollower" => new BallFollowerRunner(gameProps, physProps)
       case "serve" => new ServeRunner(gameProps, physProps)
       case "composite" => new CompositeRunner(new ServeRunner(gameProps, physProps), new RandRunner(gameProps, physProps), 0.1)
+      case "mean" => new CompositeRunner(new ServeRunner(gameProps, physProps), new MeanRandRunner(gameProps, physProps), 0.15)
       case _ => throw new IllegalArgumentException()
     }
   }

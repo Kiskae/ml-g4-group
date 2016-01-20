@@ -2,6 +2,8 @@ package neural
 
 import org.scalatest.{FlatSpec, Matchers}
 
+import scala.language.reflectiveCalls
+
 class NeuralNetworkSpec extends FlatSpec with Matchers {
 
   def fixture = new {

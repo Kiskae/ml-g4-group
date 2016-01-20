@@ -26,13 +26,6 @@ object VolleyUI extends App {
 
   val game = new GameState(gameProps, physProps, lAgent, rAgent)
 
-  //val pc = game.`match`.ball.pCircle
-  //pc.posX=239279
-  //pc.posY=210710
-  //pc.velY=5016
-  //pc.velX=14243
-  //game.`match`.lPlayer.pCircle.posX = -156666
-
   new GameLoop(60, ui, game).run()
 
 }  

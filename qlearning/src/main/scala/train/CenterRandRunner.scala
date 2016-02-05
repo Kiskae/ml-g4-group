@@ -19,7 +19,7 @@ class CenterRandRunner(gameProps:GameProperties, physProps:PhysicsProperties) ex
     ball.firstHit = false
   }
 
-  override def run[SType](s:carlo.TrainingGameState, qFunc:QFunction[SType], qAgent:QFunctionInputProvider) = {
+  override def run[SType](s:TrainingGameState, qFunc:QFunction[SType], qAgent:QFunctionInputProvider) = {
     // (stateNdx,actionNdx)
     val history = mutable.ArrayBuffer[(SType,Int)]()
     val emptyInput = new PlayerInput(false, false, false)

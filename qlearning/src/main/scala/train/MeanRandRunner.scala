@@ -23,7 +23,7 @@ class MeanRandRunner(gameProps:GameProperties, physProps:PhysicsProperties, mean
     ball.firstHit = false
   }
 
-  override def run[SType](s:carlo.TrainingGameState, qFunc:QFunction[SType], qAgent:QFunctionInputProvider) = {
+  override def run[SType](s:TrainingGameState, qFunc:QFunction[SType], qAgent:QFunctionInputProvider) = {
     if (meanExamples.size > 0 && r.nextDouble < meanChance) {
       runMean(s,qFunc,qAgent)
     } else {
@@ -31,7 +31,7 @@ class MeanRandRunner(gameProps:GameProperties, physProps:PhysicsProperties, mean
     }
   }
 
-  def runRand[SType](s:carlo.TrainingGameState, qFunc:QFunction[SType], qAgent:QFunctionInputProvider) = {
+  def runRand[SType](s:TrainingGameState, qFunc:QFunction[SType], qAgent:QFunctionInputProvider) = {
     // (stateNdx,actionNdx)
     val history = mutable.ArrayBuffer[(SType,Int)]()
     var setup = getSetup(s)
@@ -49,7 +49,7 @@ class MeanRandRunner(gameProps:GameProperties, physProps:PhysicsProperties, mean
     (reward, history)
   }
 
-  def runMean[SType](s:carlo.TrainingGameState, qFunc:QFunction[SType], qAgent:QFunctionInputProvider) = {
+  def runMean[SType](s:TrainingGameState, qFunc:QFunction[SType], qAgent:QFunctionInputProvider) = {
     // (stateNdx,actionNdx)
     val history = mutable.ArrayBuffer[(SType,Int)]()
     val setupNdx = r.nextInt(meanExamples.size)
@@ -68,7 +68,7 @@ class MeanRandRunner(gameProps:GameProperties, physProps:PhysicsProperties, mean
     (reward, history)
   }
 
-  def runMatch[SType](s:carlo.TrainingGameState, history:mutable.ArrayBuffer[(SType,Int)], qFunc:QFunction[SType], qAgent:QFunctionInputProvider) {
+  def runMatch[SType](s:TrainingGameState, history:mutable.ArrayBuffer[(SType,Int)], qFunc:QFunction[SType], qAgent:QFunctionInputProvider) {
     val m = s.`match`
     var crossNet = false
     while ((!crossNet || m.ball.pCircle.posX <= 0) && !m.matchFinished && history.size < histMaxSize) {

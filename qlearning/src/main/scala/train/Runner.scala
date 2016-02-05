@@ -19,5 +19,5 @@ object Runner {
 }
 
 trait Runner {
-  def run[SType](state:carlo.TrainingGameState, qFunc:QFunction[SType], qAgent:QFunctionInputProvider):(Int,Seq[(SType,Int)])
+  def run[SType](state:TrainingGameState, qFunc:QFunction[SType], qAgent:QFunctionInputProvider):(Int,Seq[(SType,Int)])
 }

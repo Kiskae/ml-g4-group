@@ -19,7 +19,7 @@ object QTrainMain extends App {
   val trainer = Trainer(gameProps, physProps, args(3))
 
   val qAgent = new QFunctionInputProvider(qFunc, randChance=0)
-  val state = new carlo.TrainingGameState(gameProps, physProps, qAgent, qAgent)
+  val state = new TrainingGameState(gameProps, physProps, qAgent, qAgent)
 
   // Training parameters
   val matchesPerEpoch = 10000

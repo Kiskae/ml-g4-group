@@ -19,7 +19,7 @@ class BallFollowerRunner(gameProps:GameProperties, physProps:PhysicsProperties) 
     s.`match`.lPlayer.pCircle.posX = -(gameProps.playerRadius + r.nextInt((gameProps.sideWidth-2*gameProps.playerRadius).toInt))
   }
 
-  override def run[SType](s:carlo.TrainingGameState, qFunc:QFunction[SType], qAgent:QFunctionInputProvider) = {
+  override def run[SType](s:TrainingGameState, qFunc:QFunction[SType], qAgent:QFunctionInputProvider) = {
     val history = mutable.ArrayBuffer[(SType,Int)]()
     val m = s.`match`
     val histMaxSize = 1000000

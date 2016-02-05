@@ -52,7 +52,7 @@ object UIResultGen extends App {
 
   val gameProps = new GameProperties()
   val physProps = new PhysicsProperties()
-  val state = new carlo.TrainingGameState(gameProps, physProps, null, null)
+  val state = new TrainingGameState(gameProps, physProps, null, null)
   val m = state.`match`
 
   case class Trainer(ndx:Int, name:String)
